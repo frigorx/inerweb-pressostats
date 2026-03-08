@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>inerWeb Édu — Modules interactifs</title>
+<style>
+:root{--navy:#0f2d52;--navy-mid:#1a4a6e;--orange:#e8914a;--turq:#2aafaf;--bg:#faf7f2;--card:#fff;--text:#2c3e50;--muted:#5a7080;--shadow:0 4px 16px rgba(15,45,82,.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(180deg,var(--bg),#f0ebe3);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--text);min-height:100vh}
+.app{max-width:900px;margin:0 auto;padding:20px 16px}
+.hdr{background:linear-gradient(135deg,#0f2d52,#1a4a6e,#2aafaf);padding:24px 28px;border-bottom:4px solid var(--orange);border-radius:0 0 0 40px;box-shadow:0 4px 20px rgba(15,45,82,.15);margin-bottom:28px;text-align:center}
+.hdr h1{font-size:1.6rem;font-weight:800;color:#fff;letter-spacing:2px}
+.hdr .sub{font-size:.85rem;color:rgba(255,255,255,.85);margin-top:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border:1px solid #ece4da;overflow:hidden;transition:transform .2s,box-shadow .2s;text-decoration:none;color:inherit;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-4px);box-shadow:0 8px 28px rgba(15,45,82,.12)}
+.card-top{padding:4px 0;text-align:center;font-size:.65rem;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase}
+.cat-froid{background:linear-gradient(135deg,#1a4a6e,#2aafaf)}
+.cat-elec{background:linear-gradient(135deg,#6c3483,#8e44ad)}
+.cat-outils{background:linear-gradient(135deg,#e8914a,#d47a35)}
+.card-body{padding:18px 20px;flex:1;display:flex;flex-direction:column;gap:6px}
+.card-body h2{font-size:1.05rem;font-weight:800;color:var(--navy)}
+.card-body p{font-size:.82rem;color:var(--muted);line-height:1.5}
+.tag{display:inline-block;background:#eef8f7;color:var(--turq);font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:999px;margin-top:auto;align-self:flex-start}
+footer{text-align:center;margin-top:36px;padding:16px;font-size:.75rem;color:var(--muted);border-top:1px solid #ece4da}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <h1>inerWeb Édu</h1>
+    <div class="sub">Modules interactifs — Génie frigorifique &amp; Électrotechnique</div>
+  </div>
+  <div class="grid">
+    <a href="kp1-pressostat-bp.html" class="card">
+      <div class="card-top cat-froid">Froid</div>
+      <div class="card-body">
+        <h2>Pressostat BP — KP1</h2>
+        <p>Réglage du pressostat basse pression Danfoss KP1. Différentiel, cut-in, cut-out.</p>
+        <span class="tag">Régulation</span>
+      </div>
+    </a>
+    <a href="kp5-pressostat-hp.html" class="card">
+      <div class="card-top cat-froid">Froid</div>
+      <div class="card-body">
+        <h2>Pressostat HP — KP5</h2>
+        <p>Pressostat haute pression sécurité Danfoss KP5. Méthode de calcul et DESP.</p>
+        <span class="tag">Sécurité</span>
+      </div>
+    </a>
+    <a href="echangeurs.html" class="card">
+      <div class="card-top cat-froid">Froid</div>
+      <div class="card-body">
+        <h2>Échangeurs</h2>
+        <p>Évaporateur et condenseur : principes, fonctionnement et dimensionnement.</p>
+        <span class="tag">Thermodynamique</span>
+      </div>
+    </a>
+    <a href="lecon-scroll.html" class="card">
+      <div class="card-top cat-froid">Froid</div>
+      <div class="card-body">
+        <h2>Compresseur Scroll</h2>
+        <p>Leçon interactive sur le compresseur scroll : principe, fonctionnement, avantages.</p>
+        <span class="tag">Compresseurs</span>
+      </div>
+    </a>
+    <a href="frigolo-mollier.html" class="card">
+      <div class="card-top cat-outils">Outils</div>
+      <div class="card-body">
+        <h2>FRIGOLO Mollier v2</h2>
+        <p>Diagramme enthalpique log(p)-h interactif. Tracé de cycles frigorifiques.</p>
+        <span class="tag">Diagramme</span>
+      </div>
+    </a>
+    <a href="td-triphase-couplage.html" class="card">
+      <div class="card-top cat-elec">Électrotechnique</div>
+      <div class="card-body">
+        <h2>TD Triphasé &amp; Couplage</h2>
+        <p>TD interactif sur le triphasé et le couplage moteur. Exercices et corrections.</p>
+        <span class="tag">Moteurs</span>
+      </div>
+    </a>
+  </div>
+  <footer>
+    <p>inerWeb Édu — par F. Henninot</p>
+  </footer>
+</div>
+</body>
+</html>
