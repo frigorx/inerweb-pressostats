@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Compresseur Scroll - Leçon Interactive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%);
+            color: #0f172a;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* PRÉSENTATION FULL-SCREEN */
+        .slide-container {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* HEADER BRANDING */
+        .header-bar {
+            background: linear-gradient(90deg, #1b3a63 0%, #2d5a8f 100%);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo-snowflake {
+            font-size: 36px;
+            filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.3));
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-edu {
+            background: #ff6b35;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 900;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+        }
+
+        .logo-author {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-left: 6px;
+        }
+
+        .step-indicator {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 32px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            animation: fadeInDown 0.8s ease-out 0.2s backwards;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* CONTENT AREA */
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease-out 0.3s backwards;
+        }
+
+        .main-title {
+            font-size: 64px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #1b3a63 0%, #ff6b35 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .main-subtitle {
+            font-size: 28px;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 40px;
+            animation: fadeInUp 0.8s ease-out 0.5s backwards;
+        }
+
+        .card * {
+            color: #0f172a !important;
+        }
+
+        .comment-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 8px solid #ff6b35;
+            padding: 32px;
+            border-radius: 16px;
+            font-size: 22px;
+            line-height: 1.8;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            margin-top: 30px;
+            animation: fadeInUp 0.8s ease-out 0.7s backwards;
+        }
+
+        .comment-box strong {
+            color: #92400e !important;
+            font-weight: 900;
+        }
+
+        /* SVG STYLING */
+        svg {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .label-tech {
+            font-size: 12px;
+            font-weight: 800;
+            fill: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* NAVIGATION */
+        .nav-footer {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            backdrop-filter: blur(20px);
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 3px solid #e2e8f0;
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-btn {
+            font-size: 22px;
+            font-weight: 900;
+            padding: 20px 48px;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            border: 3px solid;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
+        .nav-btn-prev {
+            background: #ffffff;
+            color: #475569;
+            border-color: #cbd5e1;
+        }
+
+        .nav-btn-prev:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .nav-btn-next {
+            background: linear-gradient(135deg, #ff6b35 0%, #f97316 100%);
+            color: white;
+            border-color: #ff6b35;
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .progress-dots {
+            display: flex;
+            gap: 12px;
+        }
+
+        .progress-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: #ff6b35;
+            box-shadow: 0 0 16px rgba(255, 107, 53, 0.6);
+            transform: scale(1.3);
+        }
+
+        .progress-dot.completed {
+            background: #22c55e;
+        }
+
+        .progress-dot.completed {
+            background: #22c55e;
+        }
+
+        /* TABLEAUX */
+        .table-comparison {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .table-comparison th {
+            background: linear-gradient(135deg, #1b3a63 0%, #2d5a8f 100%);
+            color: white !important;
+            padding: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+        }
+
+        .table-comparison td {
+            padding: 18px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 16px;
+            color: #0f172a !important;
+        }
+
+        .table-comparison tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        .table-comparison tr:hover td {
+            background: #fef3c7 !important;
+        }
+
+        .highlight-scroll {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+            font-weight: 800 !important;
+        }
+
+        /* CONTRÔLES */
+        input[type="range"] {
+            accent-color: #ff6b35;
+            height: 8px;
+        }
+
+        .controls-panel {
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 24px;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .led {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .led-red { 
+            background-color: #ef4444; 
+            box-shadow: 0 0 20px #ef4444; 
+        }
+        
+        .led-green { 
+            background-color: #22c55e; 
+            box-shadow: 0 0 20px #22c55e; 
+        }
+
+        /* ANIMATIONS COMPLÉMENTAIRES */
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        #fixed-spiral-side {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .unloaded-pos {
+            transform: translateY(-10px);
+        }
+
+        .injection-flow {
+            stroke-dasharray: 4;
+            animation: dash 0.5s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: -20; }
+        }
+
+        .schema-container {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        /* BADGES ET CARTES */
+        .info-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-card h4 {
+            font-size: 18px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .info-card p {
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* BOUTONS INTERACTIFS */
+        .btn-control {
+            background: linear-gradient(135deg, #1b3a63 0%, #2d5a8f 100%);
+            color: white;
+            font-weight: 900;
+            padding: 16px 32px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(27, 58, 99, 0.4);
+        }
+
+        .btn-control:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(27, 58, 99, 0.6);
+        }
+
+        .btn-control:active {
+            transform: translateY(0);
+        }
+
+        /* SCROLLBAR CUSTOM */
+        .content-wrapper::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .content-wrapper::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+
+        .content-wrapper::-webkit-scrollbar-thumb {
+            background: #ff6b35;
+            border-radius: 5px;
+        }
+
+        .content-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #f97316;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SLIDE CONTAINER -->
+    <div class="slide-container">
+        
+        <!-- HEADER -->
+        <div class="header-bar">
+            <div class="logo-container">
+                <span class="logo-snowflake">❄️</span>
+                <span class="logo-text">inerWeb</span>
+                <span class="logo-edu">Édu</span>
+                <span class="logo-author">par F. Henninot</span>
+            </div>
+            <div class="step-indicator">
+                <span id="step-number">Étape 1/9</span>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content-wrapper">
+            <div class="title-section">
+                <h1 id="main-title" class="main-title">Le Compresseur Scroll</h1>
+                <p id="main-subtitle" class="main-subtitle">Principe de fonctionnement et technologies</p>
+            </div>
+
+            <div id="content-area">
+                <!-- Le contenu change selon l'étape -->
+            </div>
+
+            <div id="comment-area">
+                <!-- Les commentaires apparaissent ici -->
+            </div>
+        </div>
+
+        <!-- NAVIGATION FOOTER -->
+        <div class="nav-footer">
+            <button id="btn-prev" class="nav-btn nav-btn-prev" disabled>
+                ← Précédent
+            </button>
+            
+            <div class="progress-dots">
+                <span class="progress-dot" data-step="1"></span>
+                <span class="progress-dot" data-step="2"></span>
+                <span class="progress-dot" data-step="3"></span>
+                <span class="progress-dot" data-step="4"></span>
+                <span class="progress-dot" data-step="5"></span>
+                <span class="progress-dot" data-step="6"></span>
+                <span class="progress-dot" data-step="7"></span>
+                <span class="progress-dot" data-step="8"></span>
+                <span class="progress-dot" data-step="9"></span>
+            </div>
+
+            <button id="btn-next" class="nav-btn nav-btn-next">
+                Suivant →
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION DES SPIRALES (réutilisée)
+        // ============================================
+        const config = {
+            center: { x: 200, y: 200 },
+            a: 6.8,
+            orbitR: 15.5,
+            thickness: 12,
+            turns: 5.2,
+            cycleTotalTime: 15000
+        };
+
+        // ============================================
+        // FONCTIONS RÉUTILISÉES (spirales, gaz, etc.)
+        // ============================================
+        function getSpiralPoint(theta, offsetAngle, center) {
+            const x = center.x + config.a * (Math.cos(theta + offsetAngle) + theta * Math.sin(theta + offsetAngle));
+            const y = center.y + config.a * (Math.sin(theta + offsetAngle) - theta * Math.cos(theta + offsetAngle));
+            return { x, y };
+        }
+
+        function createSpiralPath(offsetAngle, center) {
+            let points = [];
+            for (let t = 0.4; t < Math.PI * config.turns; t += 0.1) {
+                points.push(getSpiralPoint(t, offsetAngle, center));
+            }
+            return "M " + points.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" L ");
+        }
+
+        function getMedianPoint(theta, orbitAngle) {
+            const ox = Math.cos(orbitAngle) * config.orbitR;
+            const oy = Math.sin(orbitAngle) * config.orbitR;
+            const pFixed = getSpiralPoint(theta, 0, config.center);
+            const pOrbit = getSpiralPoint(theta + Math.PI, Math.PI, { x: config.center.x + ox, y: config.center.y + oy });
+            return { x: (pFixed.x + pOrbit.x) / 2, y: (pFixed.y + pOrbit.y) / 2 };
+        }
+
+        const lerp = (a, b, t) => a + (b - a) * t;
+
+        function getPressureColor(progress) {
+            if (progress < 0.3) return `rgb(${lerp(59, 34, progress/0.3)}, ${lerp(130, 211, progress/0.3)}, ${lerp(246, 238, progress/0.3)})`;
+            if (progress < 0.7) return `rgb(${lerp(34, 147, (progress-0.3)/0.4)}, ${lerp(211, 51, (progress-0.3)/0.4)}, ${lerp(238, 234, (progress-0.3)/0.4)})`;
+            return `rgb(${lerp(147, 239, (progress-0.7)/0.3)}, ${lerp(51, 68, (progress-0.7)/0.3)}, ${lerp(234, 68, (progress-0.7)/0.3)})`;
+        }
+
+        // ============================================
+        // ÉTAT DE LA LEÇON
+        // ============================================
+        let lesson = {
+            currentStep: 1,
+            totalSteps: 9,
+            animationState: {
+                time: 0,
+                isPlaying: false,
+                speed: 0.7,
+                numBubbles: 4,
+                powerSetpoint: 100,
+                currentStatus: 'ON',
+                cycleStartTime: Date.now()
+            },
+            animationFrame: null
+        };
+
+        // ============================================
+        // CONTENU DES ÉTAPES
+        // ============================================
+        const steps = {
+            1: {
+                title: "Le Compresseur Scroll",
+                subtitle: "Introduction aux compresseurs frigorifiques",
+                content: `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                        <div>
+                            <h2 class="text-3xl font-black text-slate-800 mb-6">Pourquoi le compresseur scroll ?</h2>
+                            <div class="space-y-4">
+                                <div class="info-card" style="border-left: 6px solid #22c55e;">
+                                    <div class="flex items-start gap-4">
+                                        <span style="font-size: 32px;">🔇</span>
+                                        <div>
+                                            <h4 style="color: #166534 !important;">Silencieux</h4>
+                                            <p style="color: #0f172a !important;">Moins de 60 dB(A) - Compression douce et continue</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-card" style="border-left: 6px solid #3b82f6;">
+                                    <div class="flex items-start gap-4">
+                                        <span style="font-size: 32px;">🛡️</span>
+                                        <div>
+                                            <h4 style="color: #1e40af !important;">Fiable</h4>
+                                            <p style="color: #0f172a !important;">Peu de pièces mobiles - Durée de vie exceptionnelle</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-card" style="border-left: 6px solid #f59e0b;">
+                                    <div class="flex items-start gap-4">
+                                        <span style="font-size: 32px;">⚡</span>
+                                        <div>
+                                            <h4 style="color: #92400e !important;">Efficace</h4>
+                                            <p style="color: #0f172a !important;">Rendement volumétrique 95-98% - Meilleur COP</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-card" style="border-left: 6px solid #8b5cf6;">
+                                    <div class="flex items-start gap-4">
+                                        <span style="font-size: 32px;">📦</span>
+                                        <div>
+                                            <h4 style="color: #5b21b6 !important;">Compact</h4>
+                                            <p style="color: #0f172a !important;">Faible encombrement - Intégration facile</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="schema-container">
+                            <h3 class="text-center text-lg font-black text-slate-700 mb-4 uppercase" style="color: #1b3a63 !important;">Schéma Normalisé</h3>
+                            <div style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+                                <img src="/mnt/user-data/uploads/Schéma_compresseur_Scrolls.svg" alt="Schéma normalisé compresseur scroll" style="width: 100%; height: auto; max-width: 400px; margin: 0 auto; display: block;">
+                            </div>
+                            <p class="text-sm text-center text-slate-500 mt-4 italic" style="color: #64748b !important; font-size: 13px;">Représentation symbolique selon normes NF EN 12900</p>
+                        </div>
+                    </div>
+                `,
+                comment: `<strong>À l'enseignant :</strong> Commencez par contextualiser l'usage des compresseurs scroll dans les installations frigorifiques modernes. Insistez sur le fait qu'ils sont très répandus dans les climatiseurs, pompes à chaleur et petites installations de froid commercial. Le schéma normalisé est celui que les élèves retrouveront sur les plans d'installations.`
+            },
+            2: {
+                title: "Les Deux Spirales",
+                subtitle: "Structure mécanique du compresseur scroll",
+                content: `
+                    <div class="text-center">
+                        <svg id="svg-step2" viewBox="0 0 400 400" width="600" height="600" class="mx-auto">
+                            <circle cx="200" cy="200" r="185" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+                            <g id="fixed-spiral-step2"></g>
+                            <g id="orbit-spiral-step2"></g>
+                            <text x="50" y="380" class="text-lg font-bold" fill="#64748b">Spirale FIXE (grise)</text>
+                            <text x="250" y="380" class="text-lg font-bold" fill="#334155">Spirale ORBITALE (noire)</text>
+                        </svg>
+                        <div class="mt-6 grid grid-cols-2 gap-4 max-w-3xl mx-auto">
+                            <div class="p-4 bg-slate-100 rounded-lg">
+                                <h4 class="font-bold text-slate-700 mb-2">🔒 Spirale Fixe</h4>
+                                <p class="text-sm text-slate-600">Solidaire du carter, elle ne bouge pas. C'est le stator du compresseur.</p>
+                            </div>
+                            <div class="p-4 bg-slate-800 text-white rounded-lg">
+                                <h4 class="font-bold mb-2">⚙️ Spirale Orbitale</h4>
+                                <p class="text-sm">Entraînée par le moteur, elle effectue un mouvement orbital (pas de rotation !)</p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                comment: `<strong>Point clé :</strong> Les deux spirales sont <strong>décalées de 180°</strong> (π radians). Elles s'imbriquent parfaitement et créent des poches de gaz hermétiques. Insistez bien : la spirale mobile ne TOURNE PAS sur elle-même, elle ORBITE autour d'un point fixe !`
+            },
+            3: {
+                title: "Le Mouvement Orbital",
+                subtitle: "Différence entre rotation et orbitation",
+                content: `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                        <div>
+                            <svg id="svg-step3" viewBox="0 0 400 400" width="100%" height="450" class="mx-auto">
+                                <circle cx="200" cy="200" r="185" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+                                <g id="fixed-spiral-step3"></g>
+                                <g id="orbit-spiral-step3"></g>
+                                <circle cx="200" cy="200" r="12" fill="#ef4444" opacity="0.3"/>
+                                <text x="200" y="210" text-anchor="middle" class="label-tech" fill="#ef4444">Centre fixe</text>
+                                <circle id="orbit-center-step3" cx="200" cy="200" r="6" fill="#334155"/>
+                                <line id="orbit-radius-step3" x1="200" y1="200" x2="215" y2="200" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4"/>
+                            </svg>
+                            <div class="text-center mt-4">
+                                <button id="play-step3" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700">
+                                    ▶ Démarrer l'animation
+                                </button>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="p-5 bg-red-50 border-l-4 border-red-500 rounded">
+                                <h4 class="font-bold text-red-800 mb-2">❌ ROTATION</h4>
+                                <p class="text-red-700">La pièce tourne sur son propre axe. Un point sur la spirale décrirait un cercle autour de son centre.</p>
+                            </div>
+                            <div class="p-5 bg-green-50 border-l-4 border-green-500 rounded">
+                                <h4 class="font-bold text-green-800 mb-2">✅ ORBITATION</h4>
+                                <p class="text-green-700">La spirale se déplace en cercle autour du centre fixe, SANS tourner sur elle-même. Comme la Lune autour de la Terre !</p>
+                            </div>
+                            <div class="p-4 bg-blue-50 rounded-lg">
+                                <p class="text-sm text-blue-900"><strong>Rayon d'orbite :</strong> Environ 15 mm (trait bleu pointillé)</p>
+                                <p class="text-sm text-blue-900 mt-2"><strong>Vitesse :</strong> 1450 ou 2900 tr/min selon modèle</p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                comment: `<strong>Analogie pédagogique :</strong> Comparez avec la Lune qui orbite autour de la Terre en présentant toujours la même face (pas de rotation propre). Faites bien comprendre que ce mouvement orbital crée le déplacement progressif des poches de gaz de la périphérie vers le centre.`
+            },
+            4: {
+                title: "La Compression Progressive",
+                subtitle: "Cycle complet : aspiration → compression → refoulement",
+                content: `
+                    <div>
+                        <svg id="svg-step4" viewBox="0 0 400 400" width="100%" height="500" class="mx-auto">
+                            <circle cx="200" cy="200" r="185" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+                            <text x="35" y="160" class="label-tech">ASPIRATION (Basse Pression)</text>
+                            <text x="200" y="175" class="label-tech" fill="#ef4444" text-anchor="middle">REFOULEMENT (HP)</text>
+                            <g id="gas-particles-step4"></g>
+                            <g id="fixed-spiral-step4"></g>
+                            <g id="orbit-spiral-step4"></g>
+                            <circle cx="200" cy="200" r="12" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="3 3"/>
+                        </svg>
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="p-4 bg-blue-50 rounded-lg text-center">
+                                <div class="text-3xl mb-2">🌀</div>
+                                <h4 class="font-bold text-blue-900 mb-1">1. ASPIRATION</h4>
+                                <p class="text-sm text-blue-800">Gaz BP entre en périphérie (couleur bleue claire)</p>
+                            </div>
+                            <div class="p-4 bg-orange-50 rounded-lg text-center">
+                                <div class="text-3xl mb-2">⚡</div>
+                                <h4 class="font-bold text-orange-900 mb-1">2. COMPRESSION</h4>
+                                <p class="text-sm text-orange-800">Les poches se déplacent vers le centre et diminuent de volume (orange)</p>
+                            </div>
+                            <div class="p-4 bg-red-50 rounded-lg text-center">
+                                <div class="text-3xl mb-2">🔥</div>
+                                <h4 class="font-bold text-red-900 mb-1">3. REFOULEMENT</h4>
+                                <p class="text-sm text-red-800">Gaz HP sort au centre (couleur rouge)</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-center gap-4">
+                            <button id="play-step4" class="bg-green-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-700">
+                                ▶ Lancer l'animation
+                            </button>
+                            <button id="pause-step4" class="bg-slate-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-700">
+                                ⏸ Pause
+                            </button>
+                            <div class="flex items-center gap-3">
+                                <label class="text-sm font-bold text-slate-600">Vitesse :</label>
+                                <input type="range" id="speed-step4" min="0.1" max="2.0" step="0.1" value="0.7" class="w-32">
+                                <span id="speed-val-step4" class="text-sm font-mono font-bold">0.7x</span>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                comment: `<strong>Observation essentielle :</strong> La compression est <strong>continue et progressive</strong>. Contrairement au piston (compression par à-coups), le scroll comprime en permanence sans phase morte. Notez la variation de couleur des bulles : bleu (BP) → orange (compression) → rouge (HP). Ce gradient visuel représente l'augmentation de pression et température.`
+            },
+            5: {
+                title: "Comparaison des Technologies",
+                subtitle: "Scroll vs Piston vs Rotatif vs Vis",
+                content: `
+                    <div class="overflow-x-auto">
+                        <table class="table-comparison">
+                            <thead>
+                                <tr>
+                                    <th>Critère</th>
+                                    <th class="highlight-scroll">SCROLL</th>
+                                    <th>Piston</th>
+                                    <th>Rotatif</th>
+                                    <th>Vis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="font-bold">Rendement volumétrique</td>
+                                    <td class="highlight-scroll">95-98% ⭐⭐⭐</td>
+                                    <td>80-85%</td>
+                                    <td>85-90%</td>
+                                    <td>90-95%</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">Niveau sonore</td>
+                                    <td class="highlight-scroll">55-62 dB(A) ⭐⭐⭐</td>
+                                    <td>70-80 dB(A)</td>
+                                    <td>60-68 dB(A)</td>
+                                    <td>65-75 dB(A)</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">Maintenance</td>
+                                    <td class="highlight-scroll">Très faible ⭐⭐⭐</td>
+                                    <td>Régulière (soupapes)</td>
+                                    <td>Faible</td>
+                                    <td>Moyenne (roulements)</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">Coût d'achat</td>
+                                    <td class="highlight-scroll">Moyen-Élevé</td>
+                                    <td>Faible ⭐⭐⭐</td>
+                                    <td>Moyen</td>
+                                    <td>Élevé</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">Plage de puissance</td>
+                                    <td class="highlight-scroll">2-150 kW</td>
+                                    <td>0.5-100 kW</td>
+                                    <td>1-20 kW</td>
+                                    <td>50-1000 kW ⭐⭐⭐</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">Applications types</td>
+                                    <td class="highlight-scroll">Clim, PAC résidentiel/tertiaire ⭐⭐⭐</td>
+                                    <td>Froid commercial, universel</td>
+                                    <td>Clim résidentiel</td>
+                                    <td>Froid industriel</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">Vibrations</td>
+                                    <td class="highlight-scroll">Très faibles ⭐⭐⭐</td>
+                                    <td>Importantes</td>
+                                    <td>Modérées</td>
+                                    <td>Faibles</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold">Fiabilité</td>
+                                    <td class="highlight-scroll">Excellente (peu de pièces) ⭐⭐⭐</td>
+                                    <td>Bonne (si entretenu)</td>
+                                    <td>Très bonne</td>
+                                    <td>Bonne</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 p-5 bg-green-50 border-2 border-green-200 rounded-lg">
+                        <h3 class="font-bold text-green-900 mb-2 text-lg">✅ Conclusion : Le scroll s'impose en climatisation/PAC</h3>
+                        <p class="text-green-800">Pour les applications résidentielles et tertiaires (clim, pompes à chaleur), le scroll offre le meilleur compromis <strong>performance / silence / fiabilité</strong>. Son coût plus élevé est rapidement amorti par la faible maintenance et le rendement élevé.</p>
+                    </div>
+                `,
+                comment: `<strong>À retenir :</strong> Chaque technologie a ses avantages. Le <strong>piston</strong> reste économique et polyvalent, le <strong>rotatif</strong> est compact pour petites puissances, la <strong>vis</strong> domine en industriel. Mais pour la climatisation moderne, le <strong>scroll</strong> s'est imposé grâce à son silence, sa fiabilité et son rendement. C'est le standard des PAC et clim split.`
+            },
+            6: {
+                title: "La Technologie Digital Scroll",
+                subtitle: "Modulation de puissance par by-pass de gaz",
+                content: `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800 mb-4">Principe du Digital Scroll</h2>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-blue-50 rounded-lg">
+                                    <h4 class="font-bold text-blue-900 mb-2">🎯 Objectif</h4>
+                                    <p class="text-blue-800">Adapter la puissance frigorifique à la demande réelle sans varier la vitesse du compresseur.</p>
+                                </div>
+                                <div class="p-4 bg-orange-50 rounded-lg">
+                                    <h4 class="font-bold text-orange-900 mb-2">⚙️ Mécanisme</h4>
+                                    <p class="text-orange-800">Une <strong>vanne électromagnétique</strong> pilote un <strong>décalage axial</strong> de la spirale fixe. Quand elle monte, un espace se crée → le gaz n'est plus comprimé (by-pass).</p>
+                                </div>
+                                <div class="p-4 bg-green-50 rounded-lg">
+                                    <h4 class="font-bold text-green-900 mb-2">💡 Modulation PWM</h4>
+                                    <p class="text-green-800">La vanne s'ouvre/ferme selon un cycle (ex: 15s). Si on veut 60% de puissance : 9s en charge (ON) + 6s déchargé (OFF).</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <svg viewBox="0 0 300 400" width="300" height="400">
+                                <!-- État EN CHARGE -->
+                                <g id="state-charged">
+                                    <rect x="20" y="20" width="120" height="160" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="3"/>
+                                    <text x="80" y="45" text-anchor="middle" class="font-bold text-sm" fill="#166534">MODE EN CHARGE</text>
+                                    <rect x="40" y="60" width="80" height="10" fill="#94a3b8"/>
+                                    <rect x="50" y="70" width="5" height="30" fill="#94a3b8"/>
+                                    <rect x="105" y="70" width="5" height="30" fill="#94a3b8"/>
+                                    <text x="80" y="85" text-anchor="middle" class="text-xs font-bold" fill="#475569">Fixe</text>
+                                    
+                                    <rect x="40" y="120" width="80" height="10" fill="#334155"/>
+                                    <rect x="75" y="105" width="5" height="15" fill="#334155"/>
+                                    <text x="80" y="135" text-anchor="middle" class="text-xs font-bold" fill="white">Orbitale</text>
+                                    
+                                    <path d="M 60,110 L 70,95 M 100,110 L 90,95" stroke="#ef4444" stroke-width="2" fill="none"/>
+                                    <text x="80" y="155" text-anchor="middle" class="text-xs font-bold" fill="#22c55e">✓ Compression active</text>
+                                </g>
+                                
+                                <!-- État DÉCHARGÉ -->
+                                <g id="state-unloaded">
+                                    <rect x="160" y="20" width="120" height="160" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="3"/>
+                                    <text x="220" y="45" text-anchor="middle" class="font-bold text-sm" fill="#991b1b">MODE DÉCHARGÉ</text>
+                                    
+                                    <path d="M 220,50 L 220,65" stroke="#94a3b8" stroke-width="3" class="injection-flow"/>
+                                    <rect x="200" y="65" width="40" height="8" fill="#fca5a5"/>
+                                    <text x="220" y="62" text-anchor="middle" class="text-[8px] font-bold" fill="#7f1d1d">Vanne ouverte</text>
+                                    
+                                    <rect x="180" y="75" width="80" height="10" fill="#e2e8f0"/>
+                                    <rect x="190" y="85" width="5" height="30" fill="#e2e8f0"/>
+                                    <rect x="245" y="85" width="5" height="30" fill="#e2e8f0"/>
+                                    <text x="220" y="100" text-anchor="middle" class="text-xs font-bold" fill="#94a3b8">Fixe ↑</text>
+                                    
+                                    <rect x="180" y="135" width="80" height="10" fill="#334155"/>
+                                    <rect x="215" y="120" width="5" height="15" fill="#334155"/>
+                                    <text x="220" y="150" text-anchor="middle" class="text-xs font-bold" fill="white">Orbitale</text>
+                                    
+                                    <path d="M 190,120 Q 205,110 220,120" stroke="#ef4444" stroke-width="2" fill="none" class="injection-flow"/>
+                                    <path d="M 250,120 Q 235,110 220,120" stroke="#ef4444" stroke-width="2" fill="none" class="injection-flow"/>
+                                    <text x="220" y="170" text-anchor="middle" class="text-xs font-bold" fill="#ef4444">✗ By-pass actif</text>
+                                </g>
+                                
+                                <!-- Légende cycle -->
+                                <text x="150" y="210" text-anchor="middle" class="text-sm font-black" fill="#1b3a63">CYCLE TYPIQUE (15 secondes)</text>
+                                <rect x="50" y="220" width="200" height="30" fill="#e2e8f0" rx="4"/>
+                                <rect x="50" y="220" width="120" height="30" fill="#22c55e" rx="4"/>
+                                <rect x="170" y="220" width="80" height="30" fill="#ef4444" rx="4"/>
+                                <text x="110" y="240" text-anchor="middle" class="text-xs font-bold text-white">9s CHARGE (60%)</text>
+                                <text x="210" y="240" text-anchor="middle" class="text-xs font-bold text-white">6s OFF</text>
+                            </svg>
+                        </div>
+                    </div>
+                `,
+                comment: `<strong>Innovation majeure :</strong> Le Digital Scroll permet une régulation fine SANS variateur de fréquence ! Le compresseur tourne à vitesse constante, mais la vanne électromagnétique module la puissance de 10% à 100% par pas. Pendant la phase déchargée, la consommation électrique chute de 90% car il n'y a plus d'effort de compression.`
+            },
+            7: {
+                title: "Vue Synchronisée : Orbital + Axial",
+                subtitle: "Visualisation simultanée des deux mouvements",
+                content: `
+                    <div id="digital-sync-view">
+                        <!-- Contenu injecté dynamiquement (vue dessus + côté) -->
+                    </div>
+                `,
+                comment: `<strong>Observation simultanée :</strong> À gauche, la vue de dessus montre le mouvement orbital classique. À droite, la vue de coupe révèle le déplacement axial (vertical) de la spirale fixe lors de la phase déchargée. Notez l'apparition des flèches rouges de by-pass quand la spirale monte.`
+            },
+            8: {
+                title: "Modulation de Puissance en Action",
+                subtitle: "Contrôle interactif du cycle Digital",
+                content: `
+                    <div id="digital-modulation-view">
+                        <!-- Contenu injecté dynamiquement (animation modulation) -->
+                    </div>
+                `,
+                comment: `<strong>Expérimentation :</strong> Utilisez le slider pour ajuster la puissance demandée. Observez comment le cycle se répartit entre temps de charge (vert) et décharge (rouge). À 100%, le compresseur reste en permanence en charge. À 50%, il alterne 7.5s ON / 7.5s OFF. Notez le changement de couleur des particules de gaz.`
+            },
+            9: {
+                title: "Synthèse et Points Clés",
+                subtitle: "Ce qu'il faut retenir",
+                content: `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h3 class="text-xl font-bold text-slate-800 mb-3">🎓 Scroll Classique</h3>
+                            <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-600">
+                                <p class="font-bold text-blue-900 mb-1">1. Deux spirales imbriquées</p>
+                                <p class="text-sm text-blue-800">Une fixe + une orbitale (décalage 180°)</p>
+                            </div>
+                            <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-600">
+                                <p class="font-bold text-blue-900 mb-1">2. Mouvement ORBITAL</p>
+                                <p class="text-sm text-blue-800">≠ Rotation ! La spirale ne tourne pas sur elle-même</p>
+                            </div>
+                            <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-600">
+                                <p class="font-bold text-blue-900 mb-1">3. Compression progressive</p>
+                                <p class="text-sm text-blue-800">Continue, sans à-coups (périphérie → centre)</p>
+                            </div>
+                            <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-600">
+                                <p class="font-bold text-blue-900 mb-1">4. Avantages</p>
+                                <p class="text-sm text-blue-800">Silencieux, fiable, rendement élevé (95-98%)</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <h3 class="text-xl font-bold text-slate-800 mb-3">⚡ Digital Scroll</h3>
+                            <div class="p-4 bg-orange-50 rounded-lg border-l-4 border-orange-600">
+                                <p class="font-bold text-orange-900 mb-1">1. Modulation par by-pass</p>
+                                <p class="text-sm text-orange-800">Vanne + décalage axial de la spirale fixe</p>
+                            </div>
+                            <div class="p-4 bg-orange-50 rounded-lg border-l-4 border-orange-600">
+                                <p class="font-bold text-orange-900 mb-1">2. Cycle PWM temporel</p>
+                                <p class="text-sm text-orange-800">Alternance charge/décharge (ex: 15s de cycle)</p>
+                            </div>
+                            <div class="p-4 bg-orange-50 rounded-lg border-l-4 border-orange-600">
+                                <p class="font-bold text-orange-900 mb-1">3. Économies d'énergie</p>
+                                <p class="text-sm text-orange-800">-90% de consommation en phase déchargée</p>
+                            </div>
+                            <div class="p-4 bg-orange-50 rounded-lg border-l-4 border-orange-600">
+                                <p class="font-bold text-orange-900 mb-1">4. Régulation fine</p>
+                                <p class="text-sm text-orange-800">10-100% de capacité SANS variateur</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 p-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl border-2 border-blue-200">
+                        <h3 class="text-2xl font-black text-center text-slate-800 mb-4">🏆 Applications Dominantes</h3>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-4xl mb-2">🏠</div>
+                                <p class="font-bold text-slate-700">Climatisation Résidentielle</p>
+                            </div>
+                            <div>
+                                <div class="text-4xl mb-2">🏢</div>
+                                <p class="font-bold text-slate-700">Tertiaire / Bureaux</p>
+                            </div>
+                            <div>
+                                <div class="text-4xl mb-2">♨️</div>
+                                <p class="font-bold text-slate-700">Pompes à Chaleur</p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                comment: `<strong>Conclusion pédagogique :</strong> Le compresseur scroll représente une évolution majeure dans la technologie frigorifique. Sa conception ingénieuse (2 spirales en mouvement orbital) offre des performances exceptionnelles pour la climatisation moderne. La variante Digital ajoute une régulation intelligente sans pièce mobile supplémentaire majeure. C'est LE compresseur de référence en résidentiel/tertiaire pour les 20 prochaines années !`
+            }
+        };
+
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        function updateStep() {
+            const step = steps[lesson.currentStep];
+            
+            // Update title and subtitle
+            document.getElementById('main-title').innerText = step.title;
+            document.getElementById('main-subtitle').innerText = step.subtitle;
+            document.getElementById('main-title').classList.add('fade-in');
+            document.getElementById('main-subtitle').classList.add('fade-in');
+            
+            // Update content
+            document.getElementById('content-area').innerHTML = step.content;
+            
+            // Update comment
+            document.getElementById('comment-area').innerHTML = `<div class="comment-box fade-in">${step.comment}</div>`;
+            
+            // Update step indicator
+            document.getElementById('step-number').innerText = `Étape ${lesson.currentStep}/${lesson.totalSteps}`;
+            
+            // Update progress dots
+            document.querySelectorAll('[data-step]').forEach(dot => {
+                const stepNum = parseInt(dot.getAttribute('data-step'));
+                if (stepNum === lesson.currentStep) {
+                    dot.className = 'w-3 h-3 rounded-full bg-blue-600';
+                } else if (stepNum < lesson.currentStep) {
+                    dot.className = 'w-3 h-3 rounded-full bg-green-500';
+                } else {
+                    dot.className = 'w-3 h-3 rounded-full bg-slate-300';
+                }
+            });
+            
+            // Update buttons
+            document.getElementById('btn-prev').disabled = (lesson.currentStep === 1);
+            document.getElementById('btn-next').disabled = (lesson.currentStep === lesson.totalSteps);
+            
+            // Stop previous animation
+            if (lesson.animationFrame) {
+                cancelAnimationFrame(lesson.animationFrame);
+                lesson.animationFrame = null;
+            }
+            lesson.animationState.isPlaying = false;
+            
+            // Initialize step-specific content
+            initStepContent();
+        }
+
+        function initStepContent() {
+            const step = lesson.currentStep;
+            
+            if (step === 2) {
+                // Spirales statiques
+                const fixedG = document.getElementById('fixed-spiral-step2');
+                const orbitG = document.getElementById('orbit-spiral-step2');
+                
+                const fixedPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                fixedPath.setAttribute("d", createSpiralPath(0, config.center));
+                fixedPath.setAttribute("fill", "none");
+                fixedPath.setAttribute("stroke", "#cbd5e1");
+                fixedPath.setAttribute("stroke-width", config.thickness);
+                fixedPath.setAttribute("stroke-linecap", "round");
+                fixedG.appendChild(fixedPath);
+                
+                const orbitPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                orbitPath.setAttribute("d", createSpiralPath(Math.PI, config.center));
+                orbitPath.setAttribute("fill", "none");
+                orbitPath.setAttribute("stroke", "#334155");
+                orbitPath.setAttribute("stroke-width", config.thickness);
+                orbitPath.setAttribute("stroke-linecap", "round");
+                orbitG.appendChild(orbitPath);
+            }
+            
+            if (step === 3) {
+                // Animation orbital (sans gaz)
+                initStep3Animation();
+            }
+            
+            if (step === 4) {
+                // Animation complète avec gaz
+                initStep4Animation();
+            }
+            
+            if (step === 7) {
+                // Vue synchronisée Digital
+                initStep7Animation();
+            }
+            
+            if (step === 8) {
+                // Modulation Digital
+                initStep8Animation();
+            }
+        }
+
+        function initStep3Animation() {
+            const fixedG = document.getElementById('fixed-spiral-step3');
+            const orbitG = document.getElementById('orbit-spiral-step3');
+            const orbitCenter = document.getElementById('orbit-center-step3');
+            const orbitRadius = document.getElementById('orbit-radius-step3');
+            
+            const fixedPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            fixedPath.setAttribute("d", createSpiralPath(0, config.center));
+            fixedPath.setAttribute("fill", "none");
+            fixedPath.setAttribute("stroke", "#cbd5e1");
+            fixedPath.setAttribute("stroke-width", config.thickness);
+            fixedPath.setAttribute("stroke-linecap", "round");
+            fixedG.appendChild(fixedPath);
+            
+            const orbitPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            orbitPath.setAttribute("fill", "none");
+            orbitPath.setAttribute("stroke", "#334155");
+            orbitPath.setAttribute("stroke-width", config.thickness);
+            orbitPath.setAttribute("stroke-linecap", "round");
+            orbitG.appendChild(orbitPath);
+            
+            document.getElementById('play-step3').onclick = () => {
+                lesson.animationState.isPlaying = !lesson.animationState.isPlaying;
+                document.getElementById('play-step3').innerHTML = lesson.animationState.isPlaying ? '⏸ Pause' : '▶ Démarrer';
+                if (lesson.animationState.isPlaying && !lesson.animationFrame) {
+                    animateStep3();
+                }
+            };
+            
+            function animateStep3() {
+                if (lesson.animationState.isPlaying) {
+                    lesson.animationState.time += 0.03 * lesson.animationState.speed;
+                    const angle = -lesson.animationState.time;
+                    const ox = Math.cos(angle) * config.orbitR;
+                    const oy = Math.sin(angle) * config.orbitR;
+                    
+                    orbitPath.setAttribute("d", createSpiralPath(Math.PI, {x: config.center.x + ox, y: config.center.y + oy}));
+                    orbitCenter.setAttribute("cx", config.center.x + ox);
+                    orbitCenter.setAttribute("cy", config.center.y + oy);
+                    orbitRadius.setAttribute("x2", config.center.x + ox);
+                    orbitRadius.setAttribute("y2", config.center.y + oy);
+                    
+                    lesson.animationFrame = requestAnimationFrame(animateStep3);
+                }
+            }
+        }
+
+        function initStep4Animation() {
+            const fixedG = document.getElementById('fixed-spiral-step4');
+            const orbitG = document.getElementById('orbit-spiral-step4');
+            const gasG = document.getElementById('gas-particles-step4');
+            
+            const fixedPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            fixedPath.setAttribute("fill", "none");
+            fixedPath.setAttribute("stroke", "#cbd5e1");
+            fixedPath.setAttribute("stroke-width", config.thickness);
+            fixedPath.setAttribute("stroke-linecap", "round");
+            fixedG.appendChild(fixedPath);
+            
+            const orbitPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            orbitPath.setAttribute("fill", "none");
+            orbitPath.setAttribute("stroke", "#334155");
+            orbitPath.setAttribute("stroke-width", config.thickness);
+            orbitPath.setAttribute("stroke-linecap", "round");
+            orbitG.appendChild(orbitPath);
+            
+            let bubbles = [];
+            for(let i=0; i < lesson.animationState.numBubbles; i++) {
+                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                gasG.appendChild(c);
+                bubbles.push({ circle: c, angleOffset: i * Math.PI * 2 });
+            }
+            
+            lesson.animationState.isPlaying = true;
+            
+            document.getElementById('play-step4').onclick = () => {
+                lesson.animationState.isPlaying = true;
+            };
+            
+            document.getElementById('pause-step4').onclick = () => {
+                lesson.animationState.isPlaying = false;
+            };
+            
+            document.getElementById('speed-step4').oninput = (e) => {
+                lesson.animationState.speed = parseFloat(e.target.value);
+                document.getElementById('speed-val-step4').innerText = lesson.animationState.speed.toFixed(1) + 'x';
+            };
+            
+            function animateStep4() {
+                if (lesson.animationState.isPlaying) {
+                    lesson.animationState.time += 0.04 * lesson.animationState.speed;
+                }
+                
+                const angle = -lesson.animationState.time;
+                const ox = Math.cos(angle) * config.orbitR;
+                const oy = Math.sin(angle) * config.orbitR;
+                
+                fixedPath.setAttribute("d", createSpiralPath(0, config.center));
+                orbitPath.setAttribute("d", createSpiralPath(Math.PI, {x: config.center.x + ox, y: config.center.y + oy}));
+                
+                const startTheta = Math.PI * (config.turns - 0.6);
+                
+                bubbles.forEach((b) => {
+                    let currentAngle = (lesson.animationState.time + b.angleOffset) % (Math.PI * config.turns * 1.2);
+                    
+                    if (currentAngle > startTheta) {
+                        b.circle.setAttribute("opacity", 0);
+                        return;
+                    }
+                    
+                    let progress = currentAngle / startTheta;
+                    const theta = lerp(startTheta, 0.15, progress);
+                    const pos = getMedianPoint(theta, angle);
+                    
+                    b.circle.setAttribute("cx", pos.x);
+                    b.circle.setAttribute("cy", pos.y);
+                    b.circle.setAttribute("r", lerp(18, 8, progress));
+                    b.circle.setAttribute("fill", getPressureColor(progress));
+                    
+                    let opacity = 1.0;
+                    if (progress < 0.05) opacity = progress * 20;
+                    if (progress > 0.95) opacity = (1 - progress) * 20;
+                    b.circle.setAttribute("opacity", opacity);
+                });
+                
+                lesson.animationFrame = requestAnimationFrame(animateStep4);
+            }
+            
+            animateStep4();
+        }
+
+        function initStep7Animation() {
+            // Intégration de l'animation Digital vue synchronisée (code 1)
+            const container = document.getElementById('digital-sync-view');
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="card p-4">
+                        <div class="mb-4 flex justify-between items-center px-2">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Vue de dessus (Orbital)</span>
+                            <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">X-Y PLANE</span>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl py-4">
+                            <svg id="svg-top-step7" viewBox="0 0 350 300" class="w-full h-auto">
+                                <circle cx="175" cy="150" r="130" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+                                <g id="gas-particles-step7"></g>
+                                <g id="fixed-spiral-top-step7"></g>
+                                <g id="orbit-spiral-top-step7"></g>
+                                <text x="20" y="30" class="label-tech">Aspiration</text>
+                                <text x="175" y="155" class="label-tech" fill="#ef4444" text-anchor="middle">Refoulement</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="card p-4">
+                        <div class="mb-4 flex justify-between items-center px-2">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Vue de coupe (Axial)</span>
+                            <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">Z-AXIS</span>
+                        </div>
+                        <div class="bg-slate-50 rounded-xl py-4">
+                            <svg id="svg-side-step7" viewBox="0 0 350 300" class="w-full h-auto">
+                                <path id="injection-pipe-step7" d="M 175,10 L 175,50" stroke="#94a3b8" stroke-width="4" fill="none" />
+                                <rect x="140" y="50" width="70" height="30" rx="4" fill="#f1f5f9" stroke="#cbd5e1" />
+                                <text x="175" y="40" class="label-tech" text-anchor="middle">Vanne Digital</text>
+                                <g id="fixed-spiral-side-step7">
+                                    <rect x="75" y="80" width="200" height="15" rx="2" fill="#94a3b8" />
+                                    <rect x="100" y="95" width="10" height="45" fill="#94a3b8" />
+                                    <rect x="240" y="95" width="10" height="45" fill="#94a3b8" />
+                                    <text x="175" y="92" class="label-tech" fill="white" text-anchor="middle">Spirale Fixe</text>
+                                </g>
+                                <g id="orbit-spiral-side-step7">
+                                    <rect x="75" y="180" width="200" height="15" rx="2" fill="#334155" />
+                                    <rect x="170" y="135" width="10" height="45" fill="#334155" />
+                                    <text x="175" y="192" class="label-tech" fill="white" text-anchor="middle">Orbitale</text>
+                                </g>
+                                <g id="leak-arrows-step7" opacity="0">
+                                    <path d="M 115,105 Q 140,90 165,105" stroke="#ef4444" fill="none" stroke-width="3" class="injection-flow" />
+                                    <path d="M 235,105 Q 210,90 185,105" stroke="#ef4444" fill="none" stroke-width="3" class="injection-flow" />
+                                    <text x="175" y="115" class="text-[8px] font-bold fill-red-500" text-anchor="middle">BY-PASS GAZ</text>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-6 bg-white">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 items-center">
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <label class="text-xs font-black text-slate-400 uppercase">Puissance demandée</label>
+                                <span id="cap-val-step7" class="text-sm font-bold text-blue-600">100%</span>
+                            </div>
+                            <input type="range" id="power-slider-step7" min="10" max="100" step="10" value="100" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                        </div>
+                        <div class="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div id="solenoid-status-step7" class="flex items-center gap-3">
+                                <div id="led-step7" class="w-4 h-4 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
+                                <span id="solenoid-text-step7" class="text-xs font-bold text-slate-700 uppercase">Compresseur en charge</span>
+                            </div>
+                            <div class="mt-2 text-[10px] text-slate-400 font-medium">PWM SIGNAL ACTIVE</div>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Cycle de modulation</span>
+                            <div class="w-full h-8 bg-slate-100 rounded-lg overflow-hidden flex border border-slate-200">
+                                <div id="bar-charge-step7" class="bg-green-500 h-full transition-all duration-300" style="width: 100%"></div>
+                                <div id="bar-decharge-step7" class="bg-red-400 h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between w-full mt-1 text-[9px] font-bold text-slate-400 uppercase">
+                                <span>On</span>
+                                <span>Off</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Animation Step 7 (réutilise le code Digital vue synchronisée)
+            const stateStep7 = {
+                time: 0,
+                power: 100,
+                isUnloaded: false,
+                cycleStart: Date.now()
+            };
+            
+            const topFixedStep7 = document.getElementById('fixed-spiral-top-step7');
+            const topOrbitStep7 = document.getElementById('orbit-spiral-top-step7');
+            const gasContStep7 = document.getElementById('gas-particles-step7');
+            const sideFixedStep7 = document.getElementById('fixed-spiral-side-step7');
+            const leakArrowsStep7 = document.getElementById('leak-arrows-step7');
+            const injPipeStep7 = document.getElementById('injection-pipe-step7');
+            const ledStep7 = document.getElementById('led-step7');
+            const solTextStep7 = document.getElementById('solenoid-text-step7');
+            
+            const pathFStep7 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            pathFStep7.setAttribute("fill", "none");
+            pathFStep7.setAttribute("stroke", "#cbd5e1");
+            pathFStep7.setAttribute("stroke-width", config.thickness);
+            pathFStep7.setAttribute("stroke-linecap", "round");
+            topFixedStep7.appendChild(pathFStep7);
+            
+            const pathOStep7 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            pathOStep7.setAttribute("fill", "none");
+            pathOStep7.setAttribute("stroke", "#334155");
+            pathOStep7.setAttribute("stroke-width", config.thickness);
+            pathOStep7.setAttribute("stroke-linecap", "round");
+            topOrbitStep7.appendChild(pathOStep7);
+            
+            let bubblesStep7 = [];
+            for(let i=0; i<4; i++) {
+                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                gasContStep7.appendChild(c);
+                bubblesStep7.push({el: c, offset: i * Math.PI * 2});
+            }
+            
+            function animateStep7() {
+                stateStep7.time += 0.04;
+                const orbitAngle = -stateStep7.time;
+                const ox = Math.cos(orbitAngle) * config.orbitR;
+                const oy = Math.sin(orbitAngle) * config.orbitR;
+                
+                const elapsed = (Date.now() - stateStep7.cycleStart) % config.cycleTotalTime;
+                const threshold = (stateStep7.power / 100) * config.cycleTotalTime;
+                const shouldBeUnloaded = elapsed > threshold;
+                
+                if (shouldBeUnloaded !== stateStep7.isUnloaded) {
+                    stateStep7.isUnloaded = shouldBeUnloaded;
+                    updateVisualStateStep7();
+                }
+                
+                pathFStep7.setAttribute("d", createSpiralPath(0, {x:175, y:150}));
+                pathOStep7.setAttribute("d", createSpiralPath(Math.PI, {x:175 + ox, y:150 + oy}));
+                
+                document.getElementById('orbit-spiral-side-step7').setAttribute("transform", `translateX(${ox*0.8}px)`);
+                
+                const maxT = Math.PI * (config.turns - 0.5);
+                bubblesStep7.forEach(b => {
+                    let current = (stateStep7.time + b.offset) % (maxT * 1.5);
+                    if (current > maxT) { b.el.setAttribute("opacity", 0); return; }
+                    
+                    let p = current / maxT;
+                    let t = (1-p) * maxT + 0.15;
+                    const p1 = getSpiralPoint(t, 0, {x:175, y:150});
+                    const p2 = getSpiralPoint(t+Math.PI, Math.PI, {x:175+ox, y:150+oy});
+                    
+                    b.el.setAttribute("cx", (p1.x+p2.x)/2);
+                    b.el.setAttribute("cy", (p1.y+p2.y)/2);
+                    b.el.setAttribute("r", 14 - p*8);
+                    
+                    if (stateStep7.isUnloaded) {
+                        b.el.setAttribute("fill", "#94a3b8");
+                        b.el.setAttribute("opacity", 0.2);
+                    } else {
+                        b.el.setAttribute("fill", `rgb(${120+p*135}, ${160-p*120}, ${255-p*200})`);
+                        b.el.setAttribute("opacity", 1);
+                    }
+                });
+                
+                lesson.animationFrame = requestAnimationFrame(animateStep7);
+            }
+            
+            function updateVisualStateStep7() {
+                if (stateStep7.isUnloaded) {
+                    sideFixedStep7.classList.add('unloaded-pos');
+                    leakArrowsStep7.setAttribute("opacity", 1);
+                    injPipeStep7.classList.add('injection-flow');
+                    injPipeStep7.setAttribute("stroke", "#ef4444");
+                    ledStep7.className = "w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.6)]";
+                    solTextStep7.innerText = "Injection Gaz : Déchargé";
+                } else {
+                    sideFixedStep7.classList.remove('unloaded-pos');
+                    leakArrowsStep7.setAttribute("opacity", 0);
+                    injPipeStep7.classList.remove('injection-flow');
+                    injPipeStep7.setAttribute("stroke", "#94a3b8");
+                    ledStep7.className = "w-4 h-4 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]";
+                    solTextStep7.innerText = "Compresseur en charge";
+                }
+            }
+            
+            document.getElementById('power-slider-step7').oninput = (e) => {
+                stateStep7.power = e.target.value;
+                document.getElementById('cap-val-step7').innerText = stateStep7.power + "%";
+                document.getElementById('bar-charge-step7').style.width = stateStep7.power + "%";
+                document.getElementById('bar-decharge-step7').style.width = (100 - stateStep7.power) + "%";
+            };
+            
+            animateStep7();
+        }
+
+        function initStep8Animation() {
+            // Intégration animation modulation Digital (code 2)
+            const container = document.getElementById('digital-modulation-view');
+            container.innerHTML = `
+                <div class="card flex flex-col">
+                    <div class="p-6 border-b border-slate-100 flex flex-wrap justify-between items-center bg-white gap-4">
+                        <div class="flex items-center">
+                            <div id="solenoid-led-step8" class="led led-green"></div>
+                            <div>
+                                <h2 id="current-mode-title-step8" class="text-lg font-bold text-slate-800">Compresseur en Charge</h2>
+                                <p id="digital-status-text-step8" class="text-sm text-slate-400">Pression active : 100% de débit</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="text-center bg-slate-50 px-4 py-2 rounded-lg">
+                                <span class="block text-[10px] text-slate-400 font-bold uppercase">Consigne</span>
+                                <span id="power-setpoint-val-step8" class="text-xl font-black text-blue-600">100%</span>
+                            </div>
+                            <div class="text-center bg-slate-50 px-4 py-2 rounded-lg">
+                                <span class="block text-[10px] text-slate-400 font-bold uppercase">État Réel</span>
+                                <span id="power-real-val-step8" class="text-xl font-black text-green-600">ON</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative py-6 bg-slate-50 overflow-hidden">
+                        <div id="unloaded-shimmer-step8" class="absolute inset-0 bg-red-500/5 opacity-0 transition-opacity duration-500 pointer-events-none"></div>
+                        <svg id="svg-scroll-step8" viewBox="0 0 400 400" width="100%" height="420">
+                            <circle cx="200" cy="200" r="185" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+                            <text x="35" y="160" class="label-tech">Aspiration</text>
+                            <text x="200" y="175" class="label-tech" fill="#ef4444">Refoulement</text>
+                            <g id="gas-particles-step8"></g>
+                            <g id="fixed-spiral-group-step8"></g>
+                            <g id="orbit-spiral-group-step8"></g>
+                            <circle cx="200" cy="200" r="12" fill="none" stroke="#ef4444" stroke-width="1" stroke-dasharray="3 3" />
+                        </svg>
+                    </div>
+                    <div class="controls-panel">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                            <div class="flex flex-col">
+                                <div class="flex justify-between mb-3">
+                                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Capacité Demandée (0-100%)</label>
+                                    <span class="text-xs font-bold text-blue-500">Modulation PWM</span>
+                                </div>
+                                <input type="range" id="power-slider-step8" min="10" max="100" step="5" value="100" class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer">
+                                <div class="flex justify-between mt-2 text-[10px] font-bold text-slate-400">
+                                    <span>MIN (10%)</span>
+                                    <span>MAX (100%)</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Vitesse Rotation Moteur</label>
+                                <input type="range" id="speed-slider-step8" min="0.1" max="2.0" step="0.1" value="0.8" class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-50">
+                            <button id="play-btn-step8" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-6 rounded-lg transition-all flex items-center gap-2">
+                                <span id="play-icon-step8">⏸</span> Pause Simulation
+                            </button>
+                            <div class="flex items-center gap-2 text-sm text-slate-500 italic">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Cycle de modulation : 15 secondes
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-800 mb-2">Cycle Digital Actuel</h3>
+                        <div class="w-full bg-slate-100 h-4 rounded-full overflow-hidden flex">
+                            <div id="progress-on-step8" class="bg-green-500 h-full transition-all duration-300" style="width: 100%"></div>
+                            <div id="progress-off-step8" class="bg-red-400 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-[10px] font-bold uppercase text-slate-400">
+                            <span>Temps de charge</span>
+                            <span>Temps de décharge</span>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-blue-50 rounded-xl border border-blue-100 flex items-center gap-4">
+                        <div class="text-blue-600">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM5.884 6.607a1 1 0 01-.226 1.396l-.822.613a1 1 0 11-1.2-1.604l.822-.613a1 1 0 011.426.208zm8.232.208a1 1 0 011.426-.208l.822.613a1 1 0 11-1.199 1.604l-.822-.613a1 1 0 01-.227-1.396zM11 11a1 1 0 10-2 0v1a1 1 0 102 0v-1z"></path></svg>
+                        </div>
+                        <p class="text-xs text-blue-800">
+                            <strong>Principe Digital :</strong> En mode déchargé, la spirale fixe monte. Le gaz n'est plus comprimé mais déplacé sans effort, réduisant la consommation électrique de 90% instantanément.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            const stateStep8 = {
+                time: 0,
+                isPlaying: true,
+                speed: 0.8,
+                numBubbles: 4,
+                powerSetpoint: 100,
+                currentStatus: 'ON',
+                cycleStartTime: Date.now()
+            };
+            
+            const fixedGroupStep8 = document.getElementById('fixed-spiral-group-step8');
+            const orbitGroupStep8 = document.getElementById('orbit-spiral-group-step8');
+            const gasParticlesStep8 = document.getElementById('gas-particles-step8');
+            const solenoidLedStep8 = document.getElementById('solenoid-led-step8');
+            const powerRealValStep8 = document.getElementById('power-real-val-step8');
+            const modeTitleStep8 = document.getElementById('current-mode-title-step8');
+            const statusTextStep8 = document.getElementById('digital-status-text-step8');
+            const shimmerStep8 = document.getElementById('unloaded-shimmer-step8');
+            
+            const fixedPathStep8 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            fixedPathStep8.setAttribute("fill", "none");
+            fixedPathStep8.setAttribute("stroke", "#cbd5e1");
+            fixedPathStep8.setAttribute("stroke-width", config.thickness);
+            fixedPathStep8.setAttribute("stroke-linecap", "round");
+            fixedGroupStep8.appendChild(fixedPathStep8);
+            
+            const orbitPathStep8 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            orbitPathStep8.setAttribute("fill", "none");
+            orbitPathStep8.setAttribute("stroke", "#334155");
+            orbitPathStep8.setAttribute("stroke-width", config.thickness);
+            orbitPathStep8.setAttribute("stroke-linecap", "round");
+            orbitGroupStep8.appendChild(orbitPathStep8);
+            
+            let bubblesStep8 = [];
+            for(let i=0; i < stateStep8.numBubbles; i++) {
+                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                gasParticlesStep8.appendChild(c);
+                bubblesStep8.push({ circle: c, angleOffset: i * Math.PI * 2 });
+            }
+            
+            function updateModulationStep8() {
+                const now = Date.now();
+                const elapsed = (now - stateStep8.cycleStartTime) % config.cycleTotalTime;
+                const threshold = (stateStep8.powerSetpoint / 100) * config.cycleTotalTime;
+                
+                if (elapsed < threshold) {
+                    if (stateStep8.currentStatus !== 'ON') {
+                        stateStep8.currentStatus = 'ON';
+                        applyDigitalEffectStep8(false);
+                    }
+                } else {
+                    if (stateStep8.currentStatus !== 'OFF') {
+                        stateStep8.currentStatus = 'OFF';
+                        applyDigitalEffectStep8(true);
+                    }
+                }
+            }
+            
+            function applyDigitalEffectStep8(isUnloaded) {
+                if (isUnloaded) {
+                    solenoidLedStep8.className = "led led-red";
+                    powerRealValStep8.innerText = "OFF";
+                    powerRealValStep8.className = "text-xl font-black text-red-500";
+                    modeTitleStep8.innerText = "Spirale Déchargée";
+                    statusTextStep8.innerText = "Vanne Digital active : Pression nulle";
+                    shimmerStep8.style.opacity = "1";
+                    fixedPathStep8.setAttribute("stroke-width", config.thickness - 2);
+                    fixedPathStep8.setAttribute("stroke", "#e2e8f0");
+                } else {
+                    solenoidLedStep8.className = "led led-green";
+                    powerRealValStep8.innerText = "ON";
+                    powerRealValStep8.className = "text-xl font-black text-green-600";
+                    modeTitleStep8.innerText = "Compresseur en Charge";
+                    statusTextStep8.innerText = "Pression active : 100% de débit";
+                    shimmerStep8.style.opacity = "0";
+                    fixedPathStep8.setAttribute("stroke-width", config.thickness);
+                    fixedPathStep8.setAttribute("stroke", "#cbd5e1");
+                }
+            }
+            
+            function updateStep8() {
+                if (stateStep8.isPlaying) {
+                    stateStep8.time += 0.04 * stateStep8.speed;
+                    updateModulationStep8();
+                }
+                
+                const orbitAngle = -stateStep8.time;
+                const ox = Math.cos(orbitAngle) * config.orbitR;
+                const oy = Math.sin(orbitAngle) * config.orbitR;
+                
+                fixedPathStep8.setAttribute("d", createSpiralPath(0, config.center));
+                orbitPathStep8.setAttribute("d", createSpiralPath(Math.PI, { x: config.center.x + ox, y: config.center.y + oy }));
+                
+                const startTheta = Math.PI * (config.turns - 0.6);
+                
+                bubblesStep8.forEach((b) => {
+                    let currentAngle = (stateStep8.time + b.angleOffset) % (Math.PI * config.turns * 1.2);
+                    if (currentAngle > startTheta) {
+                        b.circle.setAttribute("opacity", 0);
+                        return;
+                    }
+                    
+                    let progress = currentAngle / startTheta;
+                    const theta = lerp(startTheta, 0.15, progress);
+                    const pos = getMedianPoint(theta, orbitAngle);
+                    
+                    b.circle.setAttribute("cx", pos.x);
+                    b.circle.setAttribute("cy", pos.y);
+                    b.circle.setAttribute("r", lerp(18, 8, progress));
+                    b.circle.setAttribute("fill", getPressureColor(progress));
+                    
+                    let opacity = stateStep8.currentStatus === 'OFF' ? 0.25 : 1.0;
+                    if (progress < 0.05) opacity *= (progress * 20);
+                    if (progress > 0.95) opacity *= ((1 - progress) * 20);
+                    b.circle.setAttribute("opacity", opacity);
+                    
+                    if (stateStep8.currentStatus === 'OFF' && Math.random() > 0.95) {
+                        b.circle.classList.add('leak-particle');
+                        setTimeout(() => b.circle.classList.remove('leak-particle'), 500);
+                    }
+                });
+                
+                lesson.animationFrame = requestAnimationFrame(updateStep8);
+            }
+            
+            document.getElementById('power-slider-step8').oninput = (e) => {
+                stateStep8.powerSetpoint = parseInt(e.target.value);
+                document.getElementById('power-setpoint-val-step8').innerText = stateStep8.powerSetpoint + "%";
+                document.getElementById('progress-on-step8').style.width = stateStep8.powerSetpoint + "%";
+                document.getElementById('progress-off-step8').style.width = (100 - stateStep8.powerSetpoint) + "%";
+            };
+            
+            document.getElementById('speed-slider-step8').oninput = (e) => {
+                stateStep8.speed = parseFloat(e.target.value);
+            };
+            
+            document.getElementById('play-btn-step8').onclick = (e) => {
+                stateStep8.isPlaying = !stateStep8.isPlaying;
+                e.target.innerHTML = stateStep8.isPlaying ? '<span id="play-icon-step8">⏸</span> Pause Simulation' : '<span id="play-icon-step8">▶</span> Reprendre Simulation';
+            };
+            
+            updateStep8();
+        }
+
+        // Navigation buttons
+        document.getElementById('btn-prev').onclick = () => {
+            if (lesson.currentStep > 1) {
+                lesson.currentStep--;
+                updateStep();
+            }
+        };
+
+        document.getElementById('btn-next').onclick = () => {
+            if (lesson.currentStep < lesson.totalSteps) {
+                lesson.currentStep++;
+                updateStep();
+            }
+        };
+
+        // Initialize first step
+        updateStep();
+    </script>
+</body>
+</html>

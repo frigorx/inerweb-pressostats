@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Échangeurs - Évaporateur & Condenseur</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Segoe UI', Calibri, sans-serif;
+            font-size: 13px;
+            background: #f5f7fa;
+            color: #1a2332;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-tab.evap { background: #e3f2fd; color: #1565c0; }
+        .nav-tab.evap.active { background: #1976D2; color: white; }
+        .nav-tab.cond { background: #ffebee; color: #c62828; }
+        .nav-tab.cond.active { background: #c62828; color: white; }
+        .nav-tab.both { background: #f3e5f5; color: #7b1fa2; }
+        .nav-tab.both.active { background: #7b1fa2; color: white; }
+
+        .view-container {
+            flex: 1;
+            display: none;
+            min-height: 0;
+        }
+        .view-container.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dual-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .single-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1;
+        }
+
+        .panel-header {
+            text-align: center;
+            padding: 4px 0 8px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 6px;
+        }
+        .panel-header.evap { border-bottom-color: #1976D2; }
+        .panel-header.cond { border-bottom-color: #c62828; }
+        .panel-header h2 { font-size: 1rem; font-weight: 600; }
+        .panel-header.evap h2 { color: #1976D2; }
+        .panel-header.cond h2 { color: #c62828; }
+        .panel-header p { font-size: 0.75rem; color: #666; }
+
+        svg { flex: 1; width: 100%; min-height: 0; }
+
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            padding: 8px;
+            background: #fafafa;
+            border-radius: 6px;
+            margin-top: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .control-item label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        .control-item input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .control-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+
+        .slider-evap::-webkit-slider-thumb { background: #1976D2; }
+        .slider-cond::-webkit-slider-thumb { background: #c62828; }
+
+        .control-value {
+            font-weight: 700;
+            font-size: 0.85rem;
+            min-width: 50px;
+            text-align: right;
+        }
+        .control-value.evap { color: #1976D2; }
+        .control-value.cond { color: #c62828; }
+
+        .measures-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .measure-box {
+            flex: 1;
+            background: #f5f5f5;
+            border-radius: 6px;
+            padding: 6px 8px;
+            text-align: center;
+        }
+        .measure-box.evap { background: #e3f2fd; }
+        .measure-box.cond { background: #ffebee; }
+
+        .measure-label { font-size: 0.7rem; color: #777; }
+        .measure-value { font-size: 1.1rem; font-weight: 700; }
+        .measure-value.evap { color: #1976D2; }
+        .measure-value.cond { color: #c62828; }
+        .measure-value.ok { color: #2e7d32; }
+        .measure-value.warning { color: #f57c00; }
+        .measure-value.danger { color: #d32f2f; }
+
+        .diagnostic-box {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 6px;
+            text-align: center;
+        }
+        .diagnostic-box.ok { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+        .diagnostic-box.warning { background: #fff3e0; color: #e65100; border-left: 4px solid #f57c00; }
+        .diagnostic-box.danger { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; animation: pulse 0.5s infinite alternate; }
+
+        @keyframes pulse { from { opacity: 1; } to { opacity: 0.7; } }
+
+        .legend-row {
+            display: flex;
+            gap: 15px;
+            font-size: 0.75rem;
+            padding: 6px 10px;
+            background: #fafafa;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-dot { width: 14px; height: 10px; border-radius: 2px; }
+
+        .bubble, .particle { fill: rgba(255,255,255,0.85); }
+    </style>
+</head>
+<body>
+
+<div class="nav-tabs">
+    <button class="nav-tab evap active" onclick="showView('evap')">❄️ Évaporateur</button>
+    <button class="nav-tab cond" onclick="showView('cond')">🔥 Condenseur</button>
+    <button class="nav-tab both" onclick="showView('both')">⚡ Les deux</button>
+</div>
+
+<!-- VUE ÉVAPORATEUR -->
+<div id="viewEvap" class="view-container active">
+    <div class="single-view">
+        <div class="panel">
+            <div class="panel-header evap">
+                <h2>❄️ Évaporateur & Détendeur - Surchauffe</h2>
+                <p>Visualiser le changement d'état et la zone de surchauffe</p>
+            </div>
+            <svg id="svgEvapSingle" viewBox="0 0 700 320"></svg>
+            
+            <div class="controls-row">
+                <div class="control-item">
+                    <label>🔧 Ouverture détendeur :</label>
+                    <input type="range" id="sliderValveSingle" class="slider-evap" min="0" max="100" value="50">
+                    <span class="control-value evap" id="valValveSingle">50%</span>
+                </div>
+                <div class="control-item">
+                    <label>🌡️ T° évaporation :</label>
+                    <input type="range" id="sliderTevapSingle" class="slider-evap" min="-30" max="10" value="-10">
+                    <span class="control-value evap" id="valTevapSingle">-10°C</span>
+                </div>
+            </div>
+            
+            <div class="measures-row">
+                <div class="measure-box evap">
+                    <div class="measure-label">T° Évaporation</div>
+                    <div class="measure-value evap" id="dispTevapSingle">-10°C</div>
+                </div>
+                <div class="measure-box evap">
+                    <div class="measure-label">T° Sortie</div>
+                    <div class="measure-value evap" id="dispTsortieSingle">-2°C</div>
+                </div>
+                <div class="measure-box">
+                    <div class="measure-label">SURCHAUFFE</div>
+                    <div class="measure-value ok" id="dispSHSingle">8 K</div>
+                </div>
+            </div>
+            
+            <div class="diagnostic-box ok" id="diagEvapSingle">✅ Surchauffe correcte (6-12 K)</div>
+            
+            <div class="legend-row">
+                <div class="legend-item"><div class="legend-dot" style="background:#0288d1"></div>Liquide HP</div>
+                <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#29b6f6,#81d4fa)"></div>Mélange (évaporation)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#b3e5fc"></div>Vapeur surchauffée</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VUE CONDENSEUR -->
+<div id="viewCond" class="view-container">
+    <div class="single-view">
+        <div class="panel">
+            <div class="panel-header cond">
+                <h2>🔥 Condenseur - Sous-refroidissement</h2>
+                <p>Visualiser le changement d'état et la zone de sous-refroidissement</p>
+            </div>
+            <svg id="svgCondSingle" viewBox="0 0 700 320"></svg>
+            
+            <div class="controls-row">
+                <div class="control-item">
+                    <label>🌡️ Température extérieure :</label>
+                    <input type="range" id="sliderTextSingle" class="slider-cond" min="15" max="50" value="30">
+                    <span class="control-value cond" id="valTextSingle">30°C</span>
+                </div>
+            </div>
+            
+            <div class="measures-row">
+                <div class="measure-box cond">
+                    <div class="measure-label">T° Condensation</div>
+                    <div class="measure-value cond" id="dispTcondSingle">40°C</div>
+                </div>
+                <div class="measure-box cond">
+                    <div class="measure-label">T° Sortie liquide</div>
+                    <div class="measure-value cond" id="dispTliqSingle">35°C</div>
+                </div>
+                <div class="measure-box">
+                    <div class="measure-label">SOUS-REFROID.</div>
+                    <div class="measure-value ok" id="dispSRSingle">5 K</div>
+                </div>
+            </div>
+            
+            <div class="diagnostic-box ok" id="diagCondSingle">✅ Sous-refroidissement correct (4-8 K)</div>
+            
+            <div class="legend-row">
+                <div class="legend-item"><div class="legend-dot" style="background:#e53935"></div>Vapeur surchauffée</div>
+                <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#ff5722,#ffb74d)"></div>Mélange (condensation)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#ff9800"></div>Liquide sous-refroidi</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VUE LES DEUX -->
+<div id="viewBoth" class="view-container">
+    <div class="dual-view">
+        <div class="panel">
+            <div class="panel-header evap">
+                <h2>❄️ Évaporateur - BP</h2>
+            </div>
+            <svg id="svgEvapDual" viewBox="0 0 550 240"></svg>
+            <div class="controls-row">
+                <div class="control-item">
+                    <label>Détendeur :</label>
+                    <input type="range" id="sliderValveDual" class="slider-evap" min="0" max="100" value="50">
+                    <span class="control-value evap" id="valValveDual">50%</span>
+                </div>
+            </div>
+            <div class="measures-row">
+                <div class="measure-box evap">
+                    <div class="measure-label">Surchauffe</div>
+                    <div class="measure-value ok" id="dispSHDual">8 K</div>
+                </div>
+            </div>
+            <div class="diagnostic-box ok" id="diagEvapDual">✅ OK</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header cond">
+                <h2>🔥 Condenseur - HP</h2>
+            </div>
+            <svg id="svgCondDual" viewBox="0 0 550 240"></svg>
+            <div class="controls-row">
+                <div class="control-item">
+                    <label>T° ext :</label>
+                    <input type="range" id="sliderTextDual" class="slider-cond" min="15" max="50" value="30">
+                    <span class="control-value cond" id="valTextDual">30°C</span>
+                </div>
+            </div>
+            <div class="measures-row">
+                <div class="measure-box cond">
+                    <div class="measure-label">Sous-refroid.</div>
+                    <div class="measure-value ok" id="dispSRDual">5 K</div>
+                </div>
+            </div>
+            <div class="diagnostic-box ok" id="diagCondDual">✅ OK</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============ UTILITAIRES ============
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+function map(v, a, b, c, d) { return c + (v - a) / (b - a) * (d - c); }
+
+// ============ VUES ============
+let currentView = 'evap';
+function showView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+    document.querySelector('.nav-tab.' + view).classList.add('active');
+}
+
+// ============ ÉTAT ============
+let evapState = { valve: 50, Tevap: -10, SH: 8, Tsortie: -2 };
+let condState = { Text: 30, Tcond: 40, SR: 5, Tliq: 35 };
+
+// ============ SVG ÉVAPORATEUR ============
+function buildEvapSVG(svgId, compact) {
+    const svg = document.getElementById(svgId);
+    const W = compact ? 550 : 700;
+    const H = compact ? 240 : 320;
+    const scale = compact ? 0.75 : 1;
+    
+    svg.innerHTML = `
+        <defs>
+            <linearGradient id="gradLiq_${svgId}">
+                <stop offset="0%" stop-color="#0277bd"/>
+                <stop offset="100%" stop-color="#0288d1"/>
+            </linearGradient>
+            <linearGradient id="gradMix_${svgId}">
+                <stop offset="0%" stop-color="#29b6f6"/>
+                <stop offset="100%" stop-color="#4fc3f7"/>
+            </linearGradient>
+            <linearGradient id="gradVap_${svgId}">
+                <stop offset="0%" stop-color="#81d4fa"/>
+                <stop offset="100%" stop-color="#b3e5fc"/>
+            </linearGradient>
+            <linearGradient id="gradDanger_${svgId}">
+                <stop offset="0%" stop-color="#0288d1"/>
+                <stop offset="100%" stop-color="#d32f2f"/>
+            </linearGradient>
+        </defs>
+        
+        <rect width="100%" height="100%" fill="#fafafa"/>
+        
+        <!-- Détendeur -->
+        <g id="detendeur_${svgId}" transform="translate(${20*scale}, ${80*scale})">
+            <rect width="${70*scale}" height="${80*scale}" rx="8" fill="#1565c0" stroke="#0d47a1" stroke-width="2"/>
+            <text x="${35*scale}" y="${30*scale}" text-anchor="middle" font-size="${12*scale}" fill="white" font-weight="bold">DÉTENDEUR</text>
+            <text x="${35*scale}" y="${50*scale}" text-anchor="middle" font-size="${10*scale}" fill="#90caf9">Détente</text>
+            <text x="${35*scale}" y="${68*scale}" text-anchor="middle" font-size="${9*scale}" fill="#bbdefb" id="detValveLabel_${svgId}">50%</text>
+        </g>
+        
+        <!-- Flèche entrée -->
+        <path d="M ${90*scale} ${120*scale} L ${130*scale} ${120*scale}" stroke="#0288d1" stroke-width="${5*scale}" marker-end="url(#arrowEvap_${svgId})"/>
+        <defs><marker id="arrowEvap_${svgId}" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#0288d1"/>
+        </marker></defs>
+        
+        <!-- SERPENTIN -->
+        <g id="coilGroup_${svgId}" transform="translate(${140*scale}, ${40*scale})">
+            <!-- Fond gris -->
+            <path id="coilBg_${svgId}" d="
+                M 0,80
+                L ${400*scale},80
+                Q ${420*scale},80 ${420*scale},100
+                L ${420*scale},120
+                Q ${420*scale},140 ${400*scale},140
+                L ${20*scale},140
+                Q 0,140 0,160
+                L 0,180
+                Q 0,200 ${20*scale},200
+                L ${420*scale},200
+            " fill="none" stroke="#e0e0e0" stroke-width="${24*scale}" stroke-linecap="round" stroke-linejoin="round"/>
+            
+            <!-- Zone LIQUIDE (entrée) -->
+            <path id="coilLiq_${svgId}" d="" fill="none" stroke="url(#gradLiq_${svgId})" stroke-width="${20*scale}" stroke-linecap="round" stroke-linejoin="round"/>
+            
+            <!-- Zone MÉLANGE (évaporation) -->
+            <path id="coilMix_${svgId}" d="" fill="none" stroke="url(#gradMix_${svgId})" stroke-width="${20*scale}" stroke-linecap="round" stroke-linejoin="round"/>
+            
+            <!-- Zone VAPEUR SURCHAUFFÉE -->
+            <path id="coilVap_${svgId}" d="" fill="none" stroke="url(#gradVap_${svgId})" stroke-width="${20*scale}" stroke-linecap="round" stroke-linejoin="round"/>
+            
+            <!-- Zone DANGER (liquide qui déborde) -->
+            <path id="coilDanger_${svgId}" d="" fill="none" stroke="#d32f2f" stroke-width="${20*scale}" stroke-linecap="round" stroke-dasharray="8,4" style="display:none"/>
+            
+            <!-- Marqueur transition -->
+            <g id="markerEvap_${svgId}">
+                <circle id="markerCircleEvap_${svgId}" cx="${300*scale}" cy="200" r="${8*scale}" fill="#4fc3f7" stroke="white" stroke-width="3"/>
+                <line id="markerLineEvap_${svgId}" x1="${300*scale}" y1="${210*scale}" x2="${300*scale}" y2="${240*scale}" stroke="#4fc3f7" stroke-width="2" stroke-dasharray="4,3"/>
+                <text id="markerTextEvap_${svgId}" x="${300*scale}" y="${255*scale}" text-anchor="middle" font-size="${10*scale}" fill="#0288d1" font-weight="bold">Fin évaporation</text>
+            </g>
+            
+            <!-- Labels zones -->
+            <text id="labelMix_${svgId}" x="${200*scale}" y="${65*scale}" text-anchor="middle" font-size="${11*scale}" fill="#0277bd" font-weight="600">ÉVAPORATION</text>
+            <text id="labelVap_${svgId}" x="${350*scale}" y="${185*scale}" text-anchor="middle" font-size="${10*scale}" fill="#4fc3f7" font-weight="500">Surchauffe</text>
+            
+            <!-- Bulles -->
+            <g id="bubbles_${svgId}"></g>
+        </g>
+        
+        <!-- Sortie -->
+        <g id="sortieEvap_${svgId}" transform="translate(${compact ? 480 : 600}, ${compact ? 190 : 230})">
+            <path d="M 0,10 L 40,10" stroke="#b3e5fc" stroke-width="5"/>
+            <text x="50" y="8" font-size="10" fill="#0288d1" font-weight="500">→ Compresseur</text>
+            <text x="50" y="22" font-size="9" fill="#4fc3f7" id="sortieStateEvap_${svgId}">Vapeur surchauffée</text>
+        </g>
+        
+        <!-- Alerte liquide -->
+        <g id="alertLiquid_${svgId}" style="display:none" transform="translate(${W/2 - 100}, 10)">
+            <rect x="0" y="0" width="200" height="30" rx="6" fill="#ffebee" stroke="#d32f2f" stroke-width="2"/>
+            <text x="100" y="20" text-anchor="middle" font-size="12" fill="#c62828" font-weight="bold">⚠️ LIQUIDE → COMPRESSEUR !</text>
+        </g>
+    `;
+    
+    // Créer bulles
+    const bubblesG = document.getElementById('bubbles_' + svgId);
+    const bubbles = [];
+    for (let i = 0; i < 30; i++) {
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.classList.add('bubble');
+        bubblesG.appendChild(c);
+        bubbles.push({ el: c, t: Math.random(), speed: 0.001 + Math.random() * 0.001, r: 2 + Math.random() * 3, offset: (Math.random() - 0.5) * 8 });
+    }
+    
+    return { bubbles, scale };
+}
+
+// ============ SVG CONDENSEUR ============
+function buildCondSVG(svgId, compact) {
+    const svg = document.getElementById(svgId);
+    const W = compact ? 550 : 700;
+    const H = compact ? 240 : 320;
+    const scale = compact ? 0.75 : 1;
+    
+    svg.innerHTML = `
+        <defs>
+            <linearGradient id="gradHot_${svgId}">
+                <stop offset="0%" stop-color="#c62828"/>
+                <stop offset="100%" stop-color="#e53935"/>
+            </linearGradient>
+            <linearGradient id="gradCond_${svgId}">
+                <stop offset="0%" stop-color="#ff5722"/>
+                <stop offset="50%" stop-color="#ff9800"/>
+                <stop offset="100%" stop-color="#ffb74d"/>
+            </linearGradient>
+            <linearGradient id="gradSub_${svgId}">
+                <stop offset="0%" stop-color="#ffb74d"/>
+                <stop offset="100%" stop-color="#ff9800"/>
+            </linearGradient>
+        </defs>
+        
+        <rect width="100%" height="100%" fill="#fafafa"/>
+        
+        <!-- Label T° ext -->
+        <text id="labelText_${svgId}" x="${W/2}" y="25" text-anchor="middle" font-size="${13*scale}" fill="#e65100" font-weight="500">Température extérieure : 30°C</text>
+        
+        <!-- Compresseur -->
+        <g transform="translate(${20*scale}, ${80*scale})">
+            <rect width="${70*scale}" height="${80*scale}" rx="8" fill="#c62828" stroke="#b71c1c" stroke-width="2"/>
+            <text x="${35*scale}" y="${30*scale}" text-anchor="middle" font-size="${11*scale}" fill="white" font-weight="bold">COMP.</text>
+            <text x="${35*scale}" y="${50*scale}" text-anchor="middle" font-size="${10*scale}" fill="#ffcdd2">Refoulement</text>
+            <text x="${35*scale}" y="${68*scale}" text-anchor="middle" font-size="${9*scale}" fill="#ef9a9a">HP</text>
+        </g>
+        
+        <!-- Flèche entrée -->
+        <path d="M ${90*scale} ${120*scale} L ${130*scale} ${120*scale}" stroke="#e53935" stroke-width="${5*scale}" marker-end="url(#arrowCond_${svgId})"/>
+        <defs><marker id="arrowCond_${svgId}" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#e53935"/>
+        </marker></defs>
+        
+        <!-- SERPENTIN -->
+        <g id="condGroup_${svgId}" transform="translate(${140*scale}, ${40*scale})">
+            <!-- Fond gris -->
+            <path id="condBg_${svgId}" d="
+                M 0,80
+                L ${400*scale},80
+                Q ${420*scale},80 ${420*scale},100
+                L ${420*scale},120
+                Q ${420*scale},140 ${400*scale},140
+                L ${20*scale},140
+                Q 0,140 0,160
+                L 0,180
+                Q 0,200 ${20*scale},200
+                L ${420*scale},200
+            " fill="none" stroke="#e0e0e0" stroke-width="${24*scale}" stroke-linecap="round" stroke-linejoin="round"/>
+            
+            <!-- Zone DÉSURCHAUFFE -->
+            <path id="condHot_${svgId}" d="" fill="none" stroke="url(#gradHot_${svgId})" stroke-width="${20*scale}" stroke-linecap="round" stroke-linejoin="round"/>
+            
+            <!-- Zone CONDENSATION -->
+            <path id="condMix_${svgId}" d="" fill="none" stroke="url(#gradCond_${svgId})" stroke-width="${20*scale}" stroke-linecap="round" stroke-linejoin="round"/>
+            
+            <!-- Zone SOUS-REFROIDISSEMENT -->
+            <path id="condSub_${svgId}" d="" fill="none" stroke="url(#gradSub_${svgId})" stroke-width="${20*scale}" stroke-linecap="round" stroke-linejoin="round"/>
+            
+            <!-- Zone DANGER (gaz qui sort) -->
+            <path id="condDanger_${svgId}" d="" fill="none" stroke="#ff5722" stroke-width="${20*scale}" stroke-linecap="round" stroke-dasharray="8,4" style="display:none"/>
+            
+            <!-- Marqueur transition -->
+            <g id="markerCond_${svgId}">
+                <circle id="markerCircleCond_${svgId}" cx="${250*scale}" cy="200" r="${8*scale}" fill="#ff9800" stroke="white" stroke-width="3"/>
+                <line id="markerLineCond_${svgId}" x1="${250*scale}" y1="${210*scale}" x2="${250*scale}" y2="${240*scale}" stroke="#ff9800" stroke-width="2" stroke-dasharray="4,3"/>
+                <text id="markerTextCond_${svgId}" x="${250*scale}" y="${255*scale}" text-anchor="middle" font-size="${10*scale}" fill="#e65100" font-weight="bold">Fin condensation</text>
+            </g>
+            
+            <!-- Labels zones -->
+            <text id="labelDesurch_${svgId}" x="${200*scale}" y="${65*scale}" text-anchor="middle" font-size="${11*scale}" fill="#c62828" font-weight="600">DÉSURCHAUFFE + CONDENSATION</text>
+            <text id="labelSub_${svgId}" x="${350*scale}" y="${185*scale}" text-anchor="middle" font-size="${10*scale}" fill="#ff9800" font-weight="500">Sous-refroidissement</text>
+            
+            <!-- Particules -->
+            <g id="particles_${svgId}"></g>
+        </g>
+        
+        <!-- Sortie -->
+        <g transform="translate(${compact ? 480 : 600}, ${compact ? 190 : 230})">
+            <path d="M 0,10 L 40,10" stroke="#ff9800" stroke-width="5"/>
+            <text x="50" y="8" font-size="10" fill="#e65100" font-weight="500">→ Détendeur</text>
+            <text x="50" y="22" font-size="9" fill="#ff9800" id="sortieStateCond_${svgId}">Liquide sous-refroidi</text>
+        </g>
+        
+        <!-- Alerte gaz -->
+        <g id="alertGas_${svgId}" style="display:none" transform="translate(${W/2 - 100}, 35)">
+            <rect x="0" y="0" width="200" height="30" rx="6" fill="#fff3e0" stroke="#ff9800" stroke-width="2"/>
+            <text x="100" y="20" text-anchor="middle" font-size="11" fill="#e65100" font-weight="bold">⚠️ FLASH GAS au détendeur !</text>
+        </g>
+    `;
+    
+    // Créer particules
+    const particlesG = document.getElementById('particles_' + svgId);
+    const particles = [];
+    for (let i = 0; i < 25; i++) {
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.classList.add('particle');
+        particlesG.appendChild(c);
+        particles.push({ el: c, t: Math.random(), speed: 0.0008 + Math.random() * 0.0008, r: 2 + Math.random() * 2.5, offset: (Math.random() - 0.5) * 6 });
+    }
+    
+    return { particles, scale };
+}
+
+// ============ CALCUL PATH SEGMENTS ============
+function getPathSegments(scale) {
+    // Points clés du serpentin (coordonnées relatives au groupe)
+    const s = scale;
+    return {
+        // Ligne 1 : horizontale haut
+        L1_start: { x: 0, y: 80 },
+        L1_end: { x: 400*s, y: 80 },
+        // Coude 1
+        C1: { x: 420*s, y: 100 },
+        // Ligne 2 : verticale droite
+        L2_start: { x: 420*s, y: 100 },
+        L2_end: { x: 420*s, y: 120 },
+        // Coude 2
+        C2: { x: 400*s, y: 140 },
+        // Ligne 3 : horizontale milieu (retour)
+        L3_start: { x: 400*s, y: 140 },
+        L3_end: { x: 20*s, y: 140 },
+        // Coude 3
+        C3: { x: 0, y: 160 },
+        // Ligne 4 : verticale gauche
+        L4_start: { x: 0, y: 160 },
+        L4_end: { x: 0, y: 180 },
+        // Coude 4
+        C4: { x: 20*s, y: 200 },
+        // Ligne 5 : horizontale bas
+        L5_start: { x: 20*s, y: 200 },
+        L5_end: { x: 420*s, y: 200 },
+        // Longueur totale approximative
+        total: 400*s + 40*s + 20*s + 40*s + 380*s + 40*s + 20*s + 40*s + 400*s // ~1380 pour scale=1
+    };
+}
+
+function buildPathFromProgress(startPct, endPct, scale) {
+    // Construit un path SVG pour un segment du serpentin entre startPct et endPct (0-1)
+    const s = scale;
+    const segments = [
+        { len: 400*s, path: (p) => `L ${p * 400*s},80` },
+        { len: 40*s, path: (p) => `Q ${420*s},80 ${420*s},${80 + p*20}` },
+        { len: 20*s, path: (p) => `L ${420*s},${100 + p*20}` },
+        { len: 40*s, path: (p) => `Q ${420*s},140 ${400*s - p*(400*s - 380*s)},140` },
+        { len: 380*s, path: (p) => `L ${400*s - p*380*s},140` },
+        { len: 40*s, path: (p) => `Q 0,140 0,${140 + p*20}` },
+        { len: 20*s, path: (p) => `L 0,${160 + p*20}` },
+        { len: 40*s, path: (p) => `Q 0,200 ${p*20*s},200` },
+        { len: 400*s, path: (p) => `L ${20*s + p*400*s},200` }
+    ];
+    
+    const totalLen = segments.reduce((a, seg) => a + seg.len, 0);
+    let accumulated = 0;
+    let pathD = '';
+    let started = false;
+    
+    for (const seg of segments) {
+        const segStart = accumulated / totalLen;
+        const segEnd = (accumulated + seg.len) / totalLen;
+        
+        if (endPct <= segStart) break;
+        if (startPct >= segEnd) {
+            accumulated += seg.len;
+            continue;
+        }
+        
+        const localStart = Math.max(0, (startPct - segStart) / (segEnd - segStart));
+        const localEnd = Math.min(1, (endPct - segStart) / (segEnd - segStart));
+        
+        if (!started) {
+            // Point de départ
+            const startPt = getPointAtProgress(segStart + localStart * (segEnd - segStart), scale);
+            pathD = `M ${startPt.x},${startPt.y} `;
+            started = true;
+        }
+        
+        // Ajouter le segment
+        pathD += seg.path(localEnd) + ' ';
+        accumulated += seg.len;
+    }
+    
+    return pathD.trim();
+}
+
+function getPointAtProgress(pct, scale) {
+    const s = scale;
+    const segments = [
+        { len: 400*s, getPoint: (p) => ({ x: p * 400*s, y: 80 }) },
+        { len: 40*s, getPoint: (p) => ({ x: 420*s, y: 80 + p*20 }) },
+        { len: 20*s, getPoint: (p) => ({ x: 420*s, y: 100 + p*20 }) },
+        { len: 40*s, getPoint: (p) => ({ x: 400*s - p*20*s, y: 140 }) },
+        { len: 380*s, getPoint: (p) => ({ x: 400*s - p*380*s, y: 140 }) },
+        { len: 40*s, getPoint: (p) => ({ x: 0, y: 140 + p*20 }) },
+        { len: 20*s, getPoint: (p) => ({ x: 0, y: 160 + p*20 }) },
+        { len: 40*s, getPoint: (p) => ({ x: p*20*s, y: 200 }) },
+        { len: 400*s, getPoint: (p) => ({ x: 20*s + p*400*s, y: 200 }) }
+    ];
+    
+    const totalLen = segments.reduce((a, seg) => a + seg.len, 0);
+    let accumulated = 0;
+    
+    for (const seg of segments) {
+        const segStart = accumulated / totalLen;
+        const segEnd = (accumulated + seg.len) / totalLen;
+        
+        if (pct >= segStart && pct <= segEnd) {
+            const local = (pct - segStart) / (segEnd - segStart);
+            return seg.getPoint(local);
+        }
+        accumulated += seg.len;
+    }
+    
+    return { x: 420*s, y: 200 };
+}
+
+// ============ MISE À JOUR ÉVAPORATEUR ============
+function updateEvaporator(svgId, data) {
+    const { scale } = data;
+    const s = scale;
+    
+    // Modèle : plus le détendeur est ouvert, moins il y a de surchauffe
+    // valve 0% → SH ~20K, valve 100% → SH ~-2K (liquide qui sort)
+    const targetSH = 22 - evapState.valve * 0.24;
+    evapState.SH += (targetSH - evapState.SH) * 0.08;
+    evapState.SH += (Math.random() - 0.5) * 0.1;
+    evapState.SH = clamp(evapState.SH, -3, 22);
+    evapState.Tsortie = evapState.Tevap + Math.max(0, evapState.SH);
+    
+    // Proportions des zones (en % du serpentin total)
+    // Liquide : 5-15% selon ouverture
+    const liqEnd = map(evapState.valve, 0, 100, 0.05, 0.20);
+    
+    // Point de fin d'évaporation (début surchauffe)
+    // Si SH <= 0, l'évaporation n'est pas terminée → le mélange va jusqu'au bout
+    let evapEnd;
+    if (evapState.SH <= 0) {
+        evapEnd = 1.0; // Mélange jusqu'à la sortie
+    } else {
+        evapEnd = map(evapState.SH, 0, 22, 1.0, 0.5);
+    }
+    evapEnd = clamp(evapEnd, liqEnd + 0.1, 1.0);
+    
+    // Construire les paths
+    const pathLiq = buildPathFromProgress(0, liqEnd, s);
+    const pathMix = buildPathFromProgress(liqEnd, evapEnd, s);
+    const pathVap = evapEnd < 0.99 ? buildPathFromProgress(evapEnd, 1.0, s) : '';
+    
+    document.getElementById('coilLiq_' + svgId).setAttribute('d', pathLiq);
+    document.getElementById('coilMix_' + svgId).setAttribute('d', pathMix);
+    document.getElementById('coilVap_' + svgId).setAttribute('d', pathVap);
+    
+    // Danger : liquide qui sort
+    const dangerEl = document.getElementById('coilDanger_' + svgId);
+    const alertEl = document.getElementById('alertLiquid_' + svgId);
+    if (evapState.SH <= 0) {
+        dangerEl.style.display = 'block';
+        dangerEl.setAttribute('d', buildPathFromProgress(0.95, 1.0, s));
+        alertEl.style.display = 'block';
+    } else {
+        dangerEl.style.display = 'none';
+        alertEl.style.display = 'none';
+    }
+    
+    // Position du marqueur
+    const markerPos = getPointAtProgress(evapEnd, s);
+    document.getElementById('markerCircleEvap_' + svgId).setAttribute('cx', markerPos.x);
+    document.getElementById('markerCircleEvap_' + svgId).setAttribute('cy', markerPos.y);
+    document.getElementById('markerLineEvap_' + svgId).setAttribute('x1', markerPos.x);
+    document.getElementById('markerLineEvap_' + svgId).setAttribute('x2', markerPos.x);
+    document.getElementById('markerTextEvap_' + svgId).setAttribute('x', markerPos.x);
+    
+    // Texte sortie
+    const sortieText = document.getElementById('sortieStateEvap_' + svgId);
+    if (sortieText) {
+        if (evapState.SH <= 0) {
+            sortieText.textContent = '⚠️ MÉLANGE LIQ+VAP !';
+            sortieText.style.fill = '#d32f2f';
+        } else if (evapState.SH < 4) {
+            sortieText.textContent = 'Vapeur (SH faible)';
+            sortieText.style.fill = '#f57c00';
+        } else {
+            sortieText.textContent = 'Vapeur surchauffée';
+            sortieText.style.fill = '#4fc3f7';
+        }
+    }
+    
+    // Label détendeur
+    const detLabel = document.getElementById('detValveLabel_' + svgId);
+    if (detLabel) detLabel.textContent = evapState.valve + '%';
+    
+    // Label zone surchauffe
+    const labelVap = document.getElementById('labelVap_' + svgId);
+    if (labelVap) {
+        if (evapState.SH <= 2) {
+            labelVap.style.display = 'none';
+        } else {
+            labelVap.style.display = 'block';
+            const vapMid = getPointAtProgress((evapEnd + 1) / 2, s);
+            labelVap.setAttribute('x', vapMid.x);
+            labelVap.setAttribute('y', vapMid.y - 15);
+        }
+    }
+}
+
+// ============ MISE À JOUR CONDENSEUR ============
+function updateCondenser(svgId, data) {
+    const { scale } = data;
+    const s = scale;
+    
+    // Modèle : plus T° ext est haute, moins il y a de sous-refroidissement
+    // Text 15°C → SR ~10K, Text 50°C → SR ~-2K (gaz qui sort)
+    const targetSR = 14 - (condState.Text - 15) * 0.4;
+    condState.SR += (targetSR - condState.SR) * 0.08;
+    condState.SR += (Math.random() - 0.5) * 0.1;
+    condState.SR = clamp(condState.SR, -3, 12);
+    
+    condState.Tcond = condState.Text + 10;
+    condState.Tliq = condState.Tcond - Math.max(0, condState.SR);
+    
+    // Zones
+    // Désurchauffe : ~20% fixe
+    const hotEnd = 0.20;
+    
+    // Fin condensation : dépend du SR
+    // Si SR <= 0, condensation pas terminée → mélange jusqu'au bout
+    let condEnd;
+    if (condState.SR <= 0) {
+        condEnd = 1.0;
+    } else {
+        condEnd = map(condState.SR, 0, 12, 1.0, 0.55);
+    }
+    condEnd = clamp(condEnd, hotEnd + 0.1, 1.0);
+    
+    // Paths
+    const pathHot = buildPathFromProgress(0, hotEnd, s);
+    const pathMix = buildPathFromProgress(hotEnd, condEnd, s);
+    const pathSub = condEnd < 0.99 ? buildPathFromProgress(condEnd, 1.0, s) : '';
+    
+    document.getElementById('condHot_' + svgId).setAttribute('d', pathHot);
+    document.getElementById('condMix_' + svgId).setAttribute('d', pathMix);
+    document.getElementById('condSub_' + svgId).setAttribute('d', pathSub);
+    
+    // Danger : gaz/mélange qui sort
+    const dangerEl = document.getElementById('condDanger_' + svgId);
+    const alertEl = document.getElementById('alertGas_' + svgId);
+    if (condState.SR <= 0) {
+        dangerEl.style.display = 'block';
+        dangerEl.setAttribute('d', buildPathFromProgress(0.92, 1.0, s));
+        alertEl.style.display = 'block';
+    } else {
+        dangerEl.style.display = 'none';
+        alertEl.style.display = 'none';
+    }
+    
+    // Marqueur
+    const markerPos = getPointAtProgress(condEnd, s);
+    document.getElementById('markerCircleCond_' + svgId).setAttribute('cx', markerPos.x);
+    document.getElementById('markerCircleCond_' + svgId).setAttribute('cy', markerPos.y);
+    document.getElementById('markerLineCond_' + svgId).setAttribute('x1', markerPos.x);
+    document.getElementById('markerLineCond_' + svgId).setAttribute('x2', markerPos.x);
+    document.getElementById('markerTextCond_' + svgId).setAttribute('x', markerPos.x);
+    
+    // Label T° ext
+    const labelText = document.getElementById('labelText_' + svgId);
+    if (labelText) labelText.textContent = `Température extérieure : ${condState.Text}°C`;
+    
+    // Texte sortie
+    const sortieText = document.getElementById('sortieStateCond_' + svgId);
+    if (sortieText) {
+        if (condState.SR <= 0) {
+            sortieText.textContent = '⚠️ MÉLANGE - Flash gas !';
+            sortieText.style.fill = '#d32f2f';
+        } else if (condState.SR < 3) {
+            sortieText.textContent = 'Liquide (SR faible)';
+            sortieText.style.fill = '#f57c00';
+        } else {
+            sortieText.textContent = 'Liquide sous-refroidi';
+            sortieText.style.fill = '#ff9800';
+        }
+    }
+    
+    // Label zone SR
+    const labelSub = document.getElementById('labelSub_' + svgId);
+    if (labelSub) {
+        if (condState.SR <= 2) {
+            labelSub.style.display = 'none';
+        } else {
+            labelSub.style.display = 'block';
+            const subMid = getPointAtProgress((condEnd + 1) / 2, s);
+            labelSub.setAttribute('x', subMid.x);
+            labelSub.setAttribute('y', subMid.y - 15);
+        }
+    }
+}
+
+// ============ ANIMATION BULLES/PARTICULES ============
+function animateBubbles(svgId, data, time) {
+    const { bubbles, scale } = data;
+    const s = scale;
+    
+    // Zone où les bulles apparaissent (mélange)
+    const liqEnd = map(evapState.valve, 0, 100, 0.05, 0.20);
+    let evapEnd = evapState.SH <= 0 ? 1.0 : map(evapState.SH, 0, 22, 1.0, 0.5);
+    evapEnd = clamp(evapEnd, liqEnd + 0.1, 1.0);
+    
+    bubbles.forEach(b => {
+        b.t = (b.t + b.speed) % 1;
+        const pct = liqEnd + b.t * (evapEnd - liqEnd);
+        
+        if (pct < evapEnd) {
+            const pt = getPointAtProgress(pct, s);
+            b.el.setAttribute('cx', pt.x + b.offset);
+            b.el.setAttribute('cy', pt.y);
+            // Taille croissante
+            const size = b.r * (0.5 + b.t * 1.2);
+            b.el.setAttribute('r', size);
+            b.el.style.opacity = 0.3 + b.t * 0.5;
+        } else {
+            b.el.style.opacity = 0;
+        }
+    });
+}
+
+function animateParticles(svgId, data, time) {
+    const { particles, scale } = data;
+    const s = scale;
+    
+    // Zone condensation
+    const hotEnd = 0.20;
+    let condEnd = condState.SR <= 0 ? 1.0 : map(condState.SR, 0, 12, 1.0, 0.55);
+    condEnd = clamp(condEnd, hotEnd + 0.1, 1.0);
+    
+    particles.forEach(p => {
+        p.t = (p.t + p.speed) % 1;
+        const pct = hotEnd + p.t * (condEnd - hotEnd);
+        
+        if (pct < condEnd) {
+            const pt = getPointAtProgress(pct, s);
+            p.el.setAttribute('cx', pt.x + p.offset);
+            p.el.setAttribute('cy', pt.y);
+            // Taille décroissante (gouttelettes qui disparaissent = liquéfaction)
+            const size = p.r * (1.2 - p.t);
+            p.el.setAttribute('r', Math.max(0, size));
+            p.el.style.opacity = 0.6 * (1 - p.t);
+        } else {
+            p.el.style.opacity = 0;
+        }
+    });
+}
+
+// ============ RENDU AFFICHAGE ============
+function renderEvapDisplay(suffix) {
+    const sh = evapState.SH;
+    
+    document.getElementById('valValve' + suffix).textContent = evapState.valve + '%';
+    const tevapEl = document.getElementById('valTevap' + suffix);
+    if (tevapEl) tevapEl.textContent = evapState.Tevap + '°C';
+    
+    const dispTevap = document.getElementById('dispTevap' + suffix);
+    if (dispTevap) dispTevap.textContent = evapState.Tevap + '°C';
+    
+    const dispTsortie = document.getElementById('dispTsortie' + suffix);
+    if (dispTsortie) dispTsortie.textContent = evapState.Tsortie.toFixed(1) + '°C';
+    
+    const dispSH = document.getElementById('dispSH' + suffix);
+    if (dispSH) {
+        if (sh <= 0) {
+            dispSH.textContent = '0 K ⚠️';
+        } else {
+            dispSH.textContent = sh.toFixed(1) + ' K';
+        }
+        dispSH.className = 'measure-value';
+        if (sh <= 2) dispSH.classList.add('danger');
+        else if (sh < 6 || sh > 12) dispSH.classList.add('warning');
+        else dispSH.classList.add('ok');
+    }
+    
+    const diag = document.getElementById('diagEvap' + suffix);
+    if (diag) {
+        diag.className = 'diagnostic-box';
+        if (sh <= 0) {
+            diag.classList.add('danger');
+            diag.textContent = '🚨 DANGER : Liquide vers compresseur !';
+        } else if (sh < 4) {
+            diag.classList.add('danger');
+            diag.textContent = '⚠️ SH trop faible - Fermer le détendeur !';
+        } else if (sh < 6) {
+            diag.classList.add('warning');
+            diag.textContent = '⚡ SH limite basse - Surveiller';
+        } else if (sh <= 12) {
+            diag.classList.add('ok');
+            diag.textContent = '✅ Surchauffe correcte (6-12 K)';
+        } else if (sh <= 15) {
+            diag.classList.add('warning');
+            diag.textContent = '📈 SH élevée - Ouvrir le détendeur';
+        } else {
+            diag.classList.add('danger');
+            diag.textContent = '⚠️ Évaporateur sous-alimenté !';
+        }
+    }
+}
+
+function renderCondDisplay(suffix) {
+    const sr = condState.SR;
+    
+    document.getElementById('valText' + suffix).textContent = condState.Text + '°C';
+    
+    const dispTcond = document.getElementById('dispTcond' + suffix);
+    if (dispTcond) dispTcond.textContent = condState.Tcond + '°C';
+    
+    const dispTliq = document.getElementById('dispTliq' + suffix);
+    if (dispTliq) dispTliq.textContent = condState.Tliq.toFixed(1) + '°C';
+    
+    const dispSR = document.getElementById('dispSR' + suffix);
+    if (dispSR) {
+        if (sr <= 0) {
+            dispSR.textContent = '0 K ⚠️';
+        } else {
+            dispSR.textContent = sr.toFixed(1) + ' K';
+        }
+        dispSR.className = 'measure-value';
+        if (sr <= 2) dispSR.classList.add('danger');
+        else if (sr < 4 || sr > 8) dispSR.classList.add('warning');
+        else dispSR.classList.add('ok');
+    }
+    
+    const diag = document.getElementById('diagCond' + suffix);
+    if (diag) {
+        diag.className = 'diagnostic-box';
+        if (sr <= 0) {
+            diag.classList.add('danger');
+            diag.textContent = '🚨 DANGER : Flash gas au détendeur !';
+        } else if (sr < 3) {
+            diag.classList.add('danger');
+            diag.textContent = '⚠️ SR trop faible - Risque flash gas !';
+        } else if (sr < 4) {
+            diag.classList.add('warning');
+            diag.textContent = '⚡ SR limite basse - Surveiller';
+        } else if (sr <= 8) {
+            diag.classList.add('ok');
+            diag.textContent = '✅ Sous-refroidissement correct (4-8 K)';
+        } else if (sr <= 10) {
+            diag.classList.add('warning');
+            diag.textContent = '📈 SR élevé - Vérifier charge';
+        } else {
+            diag.classList.add('danger');
+            diag.textContent = '⚠️ SR trop élevé - Surcharge ?';
+        }
+    }
+}
+
+// ============ BOUCLE PRINCIPALE ============
+let evapSVGs = {};
+let condSVGs = {};
+
+function animate(time) {
+    // Évaporateur
+    if (currentView === 'evap') {
+        updateEvaporator('svgEvapSingle', evapSVGs['svgEvapSingle']);
+        animateBubbles('svgEvapSingle', evapSVGs['svgEvapSingle'], time);
+        renderEvapDisplay('Single');
+    } else if (currentView === 'both') {
+        updateEvaporator('svgEvapDual', evapSVGs['svgEvapDual']);
+        animateBubbles('svgEvapDual', evapSVGs['svgEvapDual'], time);
+        renderEvapDisplay('Dual');
+    }
+    
+    // Condenseur
+    if (currentView === 'cond') {
+        updateCondenser('svgCondSingle', condSVGs['svgCondSingle']);
+        animateParticles('svgCondSingle', condSVGs['svgCondSingle'], time);
+        renderCondDisplay('Single');
+    } else if (currentView === 'both') {
+        updateCondenser('svgCondDual', condSVGs['svgCondDual']);
+        animateParticles('svgCondDual', condSVGs['svgCondDual'], time);
+        renderCondDisplay('Dual');
+    }
+    
+    requestAnimationFrame(animate);
+}
+
+// ============ INIT ============
+function init() {
+    // Construire les SVG
+    evapSVGs['svgEvapSingle'] = buildEvapSVG('svgEvapSingle', false);
+    evapSVGs['svgEvapDual'] = buildEvapSVG('svgEvapDual', true);
+    condSVGs['svgCondSingle'] = buildCondSVG('svgCondSingle', false);
+    condSVGs['svgCondDual'] = buildCondSVG('svgCondDual', true);
+    
+    // Events évaporateur
+    ['Single', 'Dual'].forEach(s => {
+        const sliderValve = document.getElementById('sliderValve' + s);
+        const sliderTevap = document.getElementById('sliderTevap' + s);
+        
+        if (sliderValve) {
+            sliderValve.addEventListener('input', () => {
+                evapState.valve = +sliderValve.value;
+                document.querySelectorAll('[id^="sliderValve"]').forEach(el => el.value = evapState.valve);
+            });
+        }
+        if (sliderTevap) {
+            sliderTevap.addEventListener('input', () => {
+                evapState.Tevap = +sliderTevap.value;
+                document.querySelectorAll('[id^="sliderTevap"]').forEach(el => el.value = evapState.Tevap);
+            });
+        }
+    });
+    
+    // Events condenseur
+    ['Single', 'Dual'].forEach(s => {
+        const sliderText = document.getElementById('sliderText' + s);
+        if (sliderText) {
+            sliderText.addEventListener('input', () => {
+                condState.Text = +sliderText.value;
+                document.querySelectorAll('[id^="sliderText"]').forEach(el => el.value = condState.Text);
+            });
+        }
+    });
+    
+    requestAnimationFrame(animate);
+}
+
+init();
+</script>
+
+</body>
+</html>
