@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pressostat BP KP1 — inerWeb Édu</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'OpenDyslexic';src:url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexic-Regular.woff') format('woff');font-weight:400}
+@font-face{font-family:'OpenDyslexic';src:url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexic-Bold.woff') format('woff');font-weight:700}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Calibri,'Segoe UI',Tahoma,sans-serif;font-size:16px;line-height:1.7;min-height:100vh;background:linear-gradient(170deg,#e0e7f0 0%,#c5d2e3 100%);color:#1a2332;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none}
+/* ═══ MODE DYS ═══ */
+body.dys-mode{font-family:'OpenDyslexic','Lexend',Calibri,sans-serif!important;word-spacing:0.35em;letter-spacing:0.05em;line-height:2}
+body.dys-mode *{font-family:inherit!important}
+body.dys-mode button{font-family:inherit!important}
+body.dys-mode p,body.dys-mode div,body.dys-mode span{word-spacing:0.35em}
+/* ═══ TAILLE AGRANDIE ═══ */
+body.big-text{font-size:20px;line-height:2}
+body.big-text h2{font-size:28px!important}
+body.big-text p,body.big-text div{font-size:inherit}
+/* Combo DYS + big */
+body.dys-mode.big-text{font-size:22px;line-height:2.1;word-spacing:0.4em}
+/* ═══ CONTRASTE AUGMENTÉ ═══ */
+body.high-contrast{background:#1a1a2e!important;color:#e8e8e8}
+body.high-contrast .slide-card{background:#22223a!important;border-color:#555!important;color:#e8e8e8!important}
+body.high-contrast .slide-card h2{color:#7db8ff!important}
+body.high-contrast .slide-card strong{color:#ffcc66!important}
+body.high-contrast .slide-card p{color:#ccc!important}
+body.high-contrast .exo-card{background:#22223a!important;border-color:#555!important;color:#e8e8e8!important}
+body.high-contrast .exo-card h2,body.high-contrast .exo-card h3{color:#7db8ff!important}
+body.high-contrast .exo-card strong{color:#ffcc66!important}
+body.high-contrast table{border:1px solid #555}
+body.high-contrast th{background:#333!important;color:#ddd!important}
+body.high-contrast td{color:#ddd!important;border-bottom:1px solid #444}
+body.high-contrast tr:nth-child(odd){background:#2a2a3e!important}
+body.high-contrast tr:nth-child(even){background:#22223a!important}
+body.high-contrast footer{border-color:#444!important}
+body.high-contrast footer p,body.high-contrast footer span{color:#888!important}
+@media print{body{background:white!important}.no-print{display:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useRef,useCallback,useMemo}=React;
+
+const GAZ={
+  'R134a':{nom:'R134a',type:'HFC',usage:'Froid positif',col:'#0077cc',
+    pt:[[-40,-0.50],[-35,-0.34],[-30,-0.16],[-25,0.06],[-20,0.33],[-15,0.64],[-10,1.00],[-5,1.44],[0,1.93],[5,2.50],[10,3.15],[15,3.89],[20,4.72]]},
+  'R404A':{nom:'R404A',type:'HFC',usage:'Froid négatif / positif',col:'#6d28d9',
+    pt:[[-40,0.32],[-35,0.66],[-30,1.05],[-25,1.50],[-20,2.00],[-15,2.60],[-10,3.25],[-5,4.00],[0,4.85],[5,5.80],[10,6.85],[15,8.05],[20,9.40]]},
+  'R407C':{nom:'R407C',type:'HFC',usage:'Climatisation',col:'#0e7490',
+    pt:[[-40,-0.26],[-35,0.02],[-30,0.35],[-25,0.73],[-20,1.15],[-15,1.65],[-10,2.20],[-5,2.85],[0,3.55],[5,4.38],[10,5.30],[15,6.35],[20,7.50]]},
+  'R410A':{nom:'R410A',type:'HFC',usage:'Climatisation',col:'#be185d',
+    pt:[[-40,0.80],[-35,1.24],[-30,1.73],[-25,2.32],[-20,3.00],[-15,3.78],[-10,4.65],[-5,5.65],[0,6.75],[5,7.98],[10,9.40],[15,10.95],[20,12.65]]},
+  'R290':{nom:'R290',type:'HC',usage:'Propane',col:'#b45309',
+    pt:[[-40,-0.28],[-35,-0.05],[-30,0.21],[-25,0.50],[-20,0.85],[-15,1.24],[-10,1.70],[-5,2.20],[0,2.75],[5,3.40],[10,4.10],[15,4.90],[20,5.80]]},
+  'R449A':{nom:'R449A',type:'HFO',usage:'Remplacement R404A',col:'#0f766e',
+    pt:[[-40,0.12],[-35,0.43],[-30,0.80],[-25,1.22],[-20,1.72],[-15,2.30],[-10,2.95],[-5,3.70],[0,4.55],[5,5.50],[10,6.55],[15,7.75],[20,9.05]]},
+  'R32':{nom:'R32',type:'HFC',usage:'Clim nouvelle gén.',col:'#7e22ce',
+    pt:[[-40,0.20],[-35,0.55],[-30,0.98],[-25,1.48],[-20,2.08],[-15,2.78],[-10,3.60],[-5,4.55],[0,5.65],[5,6.90],[10,8.30],[15,9.90],[20,11.65]]},
+};
+function p2t(g,b){const p=GAZ[g].pt;if(b<=p[0][1])return p[0][0];if(b>=p[p.length-1][1])return p[p.length-1][0];for(let i=0;i<p.length-1;i++){if(b>=p[i][1]&&b<=p[i+1][1]){const r=(b-p[i][1])/(p[i+1][1]-p[i][1]);return p[i][0]+r*(p[i+1][0]-p[i][0]);}}return 0;}
+function t2p(g,t){const p=GAZ[g].pt;if(t<=p[0][0])return p[0][1];if(t>=p[p.length-1][0])return p[p.length-1][1];for(let i=0;i<p.length-1;i++){if(t>=p[i][0]&&t<=p[i+1][0]){const r=(t-p[i][0])/(p[i+1][0]-p[i][0]);return p[i][1]+r*(p[i+1][1]-p[i][1]);}}return 0;}
+
+const BL='#1b3a63',BLV='#2a5298',BLP='#d8e2f0',
+  OR='#e85d2a',ORP='#fff0e8',ORD='#ffcaab',
+  VT='#15803d',VTP='#d1fae5',
+  RG='#c42020',RGP='#fee2e2',
+  G0='#f2f4f7',G1='#e2e7ed',G2='#c8d0da',G3='#9aa6b5',
+  G4='#6b7a8c',G5='#455266',G7='#2a3a4c',G9='#0f1720',W='#ffffff';
+const HP_C='#dc3545',BP_C='#2a7fff',LIQ_C='#ff8c00';
+
+const Logo=({size='normal'})=>{
+  const s=size==='big'?1.3:size==='small'?0.8:1;
+  return(
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6*s}}>
+      <svg width={36*s} height={36*s} viewBox="0 0 40 40">
+        <defs><linearGradient id="lgBL" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#2a5298"/><stop offset="100%" stopColor="#1b3a63"/></linearGradient></defs>
+        <circle cx="20" cy="20" r="19" fill="url(#lgBL)" stroke="#4a78c0" strokeWidth="0.8"/>
+        <g transform="translate(20,20)" stroke="white" fill="none">
+          {[0,60,120,180,240,300].map((a,i)=><g key={i} transform={`rotate(${a})`}><line x1="0" y1="-4" x2="0" y2="-13" strokeWidth="1.8" strokeLinecap="round"/><line x1="0" y1="-9" x2="-3" y2="-12" strokeWidth="1" strokeLinecap="round"/><line x1="0" y1="-9" x2="3" y2="-12" strokeWidth="1" strokeLinecap="round"/></g>)}
+          <circle r="2.5" fill="white"/>
+        </g>
+      </svg>
+      <div style={{display:'flex',flexDirection:'column',lineHeight:1}}>
+        <div style={{display:'flex',alignItems:'baseline',gap:4*s}}>
+          <span style={{fontWeight:900,fontSize:20*s,color:BL,letterSpacing:-0.5}}>inerWeb</span>
+          <span style={{background:`linear-gradient(135deg, #ff6b35, ${OR})`,color:'white',fontSize:12*s,fontWeight:800,padding:`${2*s}px ${8*s}px`,borderRadius:5*s}}>Édu</span>
+        </div>
+        <span style={{fontSize:9*s,fontWeight:600,color:G4,letterSpacing:1.5,marginTop:1}}>par F. Henninot</span>
+      </div>
+    </div>
+  );
+};
+
+// ═══ BARRE ACCESSIBILITÉ ═══
+const AccessBar=()=>{
+  const[dys,setDys]=useState(false);
+  const[big,setBig]=useState(false);
+  const[hc,setHc]=useState(false);
+  useEffect(()=>{document.body.classList.toggle('dys-mode',dys);},[dys]);
+  useEffect(()=>{document.body.classList.toggle('big-text',big);},[big]);
+  useEffect(()=>{document.body.classList.toggle('high-contrast',hc);},[hc]);
+  const btnS=(on)=>({padding:'7px 14px',borderRadius:8,fontWeight:700,fontSize:13,
+    border:`2px solid ${on?'#6d28d9':G2}`,background:on?'#6d28d9':W,color:on?W:G5,
+    display:'flex',alignItems:'center',gap:6,transition:'all 0.15s'});
+  return(
+    <div style={{display:'flex',justifyContent:'center',gap:8,flexWrap:'wrap',marginBottom:10}} className="no-print">
+      <div style={{fontSize:12,fontWeight:700,color:G4,display:'flex',alignItems:'center',gap:4}}>♿ Accessibilité :</div>
+      <button style={btnS(dys)} onClick={()=>setDys(!dys)}>
+        <span style={{fontSize:16}}>🔤</span> Police DYS {dys?'✓':''}
+      </button>
+      <button style={btnS(big)} onClick={()=>setBig(!big)}>
+        <span style={{fontSize:16}}>🔍</span> Taille + {big?'✓':''}
+      </button>
+      <button style={btnS(hc)} onClick={()=>setHc(!hc)}>
+        <span style={{fontSize:16}}>🌙</span> Contraste + {hc?'✓':''}
+      </button>
+    </div>
+  );
+};
+
+// ═══ MANO ═══
+const Mano=({pression,gaz,cutOut,cutIn,size=420,showDigital=true})=>{
+  const ref=useRef(null);const gazD=GAZ[gaz];
+  const maxP=Math.max(6,Math.ceil(gazD.pt[gazD.pt.length-1][1]/2)*2);
+  useEffect(()=>{
+    const cv=ref.current;if(!cv)return;const ctx=cv.getContext('2d');
+    const S=size;cv.width=S*2;cv.height=S*2;ctx.scale(2,2);
+    const cx=S/2,cy=S/2,R=S*0.40;
+    const sA=Math.PI*0.75,eA=Math.PI*2.25;
+    const v2a=v=>sA+(Math.max(0,v)/maxP)*(eA-sA);
+    ctx.clearRect(0,0,S,S);
+    const gc=ctx.createRadialGradient(cx,cy,R+5,cx,cy,R+20);gc.addColorStop(0,'#b0b8c0');gc.addColorStop(1,'#606870');
+    ctx.beginPath();ctx.arc(cx,cy,R+16,0,Math.PI*2);ctx.fillStyle=gc;ctx.fill();
+    const gr=ctx.createRadialGradient(cx,cy,R*0.2,cx,cy,R+5);gr.addColorStop(0,'#fafbfc');gr.addColorStop(0.8,'#eaecf0');gr.addColorStop(1,'#d4d8de');
+    ctx.beginPath();ctx.arc(cx,cy,R+6,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,R+1,0,Math.PI*2);ctx.fillStyle='#f6f7f9';ctx.fill();
+    if(cutOut!=null&&cutOut>=0&&cutIn>cutOut){
+      ctx.beginPath();ctx.arc(cx,cy,R-16,v2a(cutOut),v2a(cutIn),false);ctx.lineWidth=16;ctx.strokeStyle='rgba(27,58,99,0.08)';ctx.stroke();
+      [v2a(cutOut),v2a(cutIn)].forEach((a,i)=>{ctx.beginPath();ctx.arc(cx,cy,R-16,a-0.03,a+0.03,false);ctx.lineWidth=17;ctx.strokeStyle=i===0?RG:VT;ctx.stroke();});
+    }
+    const pStep=maxP<=6?0.5:maxP<=12?1:2;
+    for(let v=0;v<=maxP;v+=pStep){
+      const a=v2a(v),maj=maxP<=6?v%1===0:v%2===0;
+      const inn=maj?R-42:R-30,out=R-20;
+      ctx.beginPath();ctx.moveTo(cx+inn*Math.cos(a),cy+inn*Math.sin(a));ctx.lineTo(cx+out*Math.cos(a),cy+out*Math.sin(a));
+      ctx.strokeStyle=maj?'#2a2a2a':'#aaa';ctx.lineWidth=maj?3:1;ctx.stroke();
+      if(maj){ctx.save();ctx.font=`bold ${Math.round(R*0.14)}px Calibri`;ctx.fillStyle='#2a2a2a';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(v.toString(),cx+(R-55)*Math.cos(a),cy+(R-55)*Math.sin(a));ctx.restore();}
+    }
+    ctx.globalAlpha=0.45;
+    for(let t=Math.ceil(gazD.pt[0][0]/5)*5;t<=gazD.pt[gazD.pt.length-1][0];t+=5){
+      const p=t2p(gaz,t);if(p<0||p>maxP)continue;const a=v2a(p);
+      ctx.beginPath();ctx.moveTo(cx+(R-74)*Math.cos(a),cy+(R-74)*Math.sin(a));ctx.lineTo(cx+(R-64)*Math.cos(a),cy+(R-64)*Math.sin(a));
+      ctx.strokeStyle=gazD.col;ctx.lineWidth=1;ctx.stroke();
+      if(t%10===0){ctx.save();ctx.font=`bold ${Math.round(R*0.08)}px Calibri`;ctx.fillStyle=gazD.col;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(t+'°',cx+(R-86)*Math.cos(a),cy+(R-86)*Math.sin(a));ctx.restore();}
+    }
+    ctx.globalAlpha=1;
+    ctx.font=`bold ${Math.round(R*0.1)}px Calibri`;ctx.fillStyle='#888';ctx.textAlign='center';ctx.fillText('bar',cx,cy+R*0.22);
+    ctx.font=`bold ${Math.round(R*0.07)}px Calibri`;ctx.fillStyle=gazD.col;ctx.fillText(gazD.nom+' (°C)',cx,cy+R*0.32);
+    const clP=Math.max(0,Math.min(maxP,pression));const na=v2a(clP);
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(na);
+    ctx.beginPath();ctx.moveTo(10,3.5);ctx.lineTo(R-34,1.2);ctx.lineTo(R-34,-1.2);ctx.lineTo(10,-3.5);ctx.closePath();ctx.fillStyle='#c41030';ctx.fill();
+    ctx.beginPath();ctx.moveTo(-18,4.5);ctx.lineTo(10,3.5);ctx.lineTo(10,-3.5);ctx.lineTo(-18,-4.5);ctx.closePath();ctx.fillStyle='#666';ctx.fill();
+    ctx.restore();
+    ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.fillStyle='#444';ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle='#999';ctx.fill();
+    if(cutOut!=null&&cutOut>=0){
+      ctx.font=`bold ${Math.round(R*0.1)}px Calibri`;
+      const acL=v2a(Math.max(0,cutOut));ctx.fillStyle=RG;ctx.textAlign='center';
+      ctx.fillText('C',cx+(R+22)*Math.cos(acL),cy+(R+22)*Math.sin(acL)+3);
+      if(cutIn>0){const aeL=v2a(cutIn);ctx.fillStyle=VT;ctx.fillText('E',cx+(R+22)*Math.cos(aeL),cy+(R+22)*Math.sin(aeL)+3);}
+    }
+  },[pression,cutOut,cutIn,gaz,maxP,size,gazD]);
+  const tEvap=pression>=GAZ[gaz].pt[0][1]?p2t(gaz,pression):null;
+  return(
+    <div style={{textAlign:'center'}}>
+      <canvas ref={ref} style={{width:size,height:size,display:'block',margin:'0 auto'}}/>
+      {showDigital&&<div style={{display:'flex',justifyContent:'center',gap:24,marginTop:6}}>
+        <div><div style={{fontSize:12,fontWeight:800,color:G4,textTransform:'uppercase'}}>Pression</div>
+        <div style={{fontSize:32,fontWeight:900,fontFamily:'monospace',color:G9}}>{pression.toFixed(1)}<span style={{fontSize:14,color:G4}}> bar</span></div></div>
+        <div style={{width:2,background:G2}}/>
+        <div><div style={{fontSize:12,fontWeight:800,color:gazD.col,textTransform:'uppercase'}}>T° évap.</div>
+        <div style={{fontSize:32,fontWeight:900,fontFamily:'monospace',color:gazD.col}}>{tEvap!==null?tEvap.toFixed(1):'—'}<span style={{fontSize:14}}>°C</span></div></div>
+      </div>}
+    </div>
+  );
+};
+
+// ═══ CONTACTS COMPACT ═══
+const Contacts124=({compOn,compact=false})=>{
+  const w=compact?260:300,h=compact?100:120;
+  return(
+  <div style={{background:'#181c22',borderRadius:10,padding:compact?8:14,border:'1.5px solid #333'}}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{width:'100%',maxWidth:compact?280:400,display:'block',margin:'0 auto'}}>
+      <circle cx="35" cy={h/2} r="12" fill="#333" stroke="#666" strokeWidth="2"/><text x="35" y={h/2+4} textAnchor="middle" fontSize="14" fontWeight="900" fill="white">1</text>
+      <circle cx="140" cy="20" r="11" fill={compOn?VT:'#3a3a3a'} stroke={compOn?'#22c55e':'#555'} strokeWidth="2"/><text x="140" y="25" textAnchor="middle" fontSize="13" fontWeight="900" fill="white">4</text>
+      <line x1="151" y1="20" x2="172" y2="20" stroke={compOn?'#22c55e':'#555'} strokeWidth="2"/>
+      <circle cx="186" cy="20" r="12" fill="none" stroke={compOn?'#22c55e':'#555'} strokeWidth="2.5"/><text x="186" y="25" textAnchor="middle" fontSize="11" fontWeight="800" fill={compOn?'#22c55e':'#666'}>M</text>
+      <circle cx="216" cy="20" r="7" fill={compOn?'#22c55e':'#333'}/>
+      {compOn&&<circle cx="216" cy="20" r="7" fill="#22c55e" opacity="0.3"><animate attributeName="r" values="7;12;7" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;0;0.3" dur="1.2s" repeatCount="indefinite"/></circle>}
+      <text x="234" y="24" fontSize="9" fontWeight="800" fill={compOn?'#4ade80':'#555'}>MARCHE</text>
+      <circle cx="140" cy={h-20} r="11" fill={!compOn?OR:'#3a3a3a'} stroke={!compOn?'#ff8c5a':'#555'} strokeWidth="2"/><text x="140" y={h-16} textAnchor="middle" fontSize="13" fontWeight="900" fill="white">2</text>
+      <line x1="151" y1={h-20} x2="172" y2={h-20} stroke={!compOn?OR:'#555'} strokeWidth="2"/>
+      <circle cx="186" cy={h-20} r="12" fill="none" stroke={!compOn?OR:'#555'} strokeWidth="2.5"/>
+      <line x1="179" y1={h-27} x2="193" y2={h-13} stroke={!compOn?OR:'#555'} strokeWidth="2"/><line x1="193" y1={h-27} x2="179" y2={h-13} stroke={!compOn?OR:'#555'} strokeWidth="2"/>
+      <circle cx="216" cy={h-20} r="7" fill={!compOn?RG:'#333'}/>
+      {!compOn&&<circle cx="216" cy={h-20} r="7" fill={RG} opacity="0.3"><animate attributeName="r" values="7;12;7" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;0;0.3" dur="1.2s" repeatCount="indefinite"/></circle>}
+      <text x="234" y={h-16} fontSize="9" fontWeight="800" fill={!compOn?'#f87171':'#555'}>SIGNAL</text>
+      <line x1="47" y1={h/2} x2="66" y2={h/2} stroke="#aaa" strokeWidth="2.5"/><circle cx="66" cy={h/2} r="3" fill="#bbb"/>
+      {compOn?<line x1="66" y1={h/2} x2="129" y2="20" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"/>:
+              <line x1="66" y1={h/2} x2="129" y2={h-20} stroke={OR} strokeWidth="2.5" strokeLinecap="round"/>}
+    </svg>
+  </div>
+);};
+
+// ═══ KP1 FACE ═══
+const KP1Face=({cutIn,diff,gaz,small=false})=>{
+  const cutOut=Math.round((cutIn-diff)*100)/100;
+  const maxCI=Math.max(7,Math.ceil(GAZ[gaz].pt[GAZ[gaz].pt.length-1][1]));
+  const T=58,B=230,H=B-T;
+  const ciY=T+(cutIn/maxCI)*H,dY=T+(diff/4)*H;
+  const coY=cutOut>=0&&cutOut<=maxCI?T+(cutOut/maxCI)*H:null;
+  return(
+    <svg viewBox="0 0 280 270" style={{width:'100%',maxWidth:small?280:380,display:'block',margin:'0 auto',background:'#1e1e1e',borderRadius:10,border:'2px solid #444'}}>
+      <text x="80" y="26" textAnchor="middle" fontSize="16" fontWeight="800" fill="white" letterSpacing="2">CUT IN</text>
+      <text x="206" y="26" textAnchor="middle" fontSize="16" fontWeight="800" fill="white" letterSpacing="2">DIFF</text>
+      <line x1="140" y1="36" x2="140" y2="244" stroke="#444" strokeWidth="1.5"/>
+      <rect x="18" y={T-4} width="118" height={H+8} rx="3" fill="#111" stroke="#333" strokeWidth="1"/>
+      {Array.from({length:maxCI+1},(_,i)=>i).map(v=>{const y=T+(v/maxCI)*H;return(<g key={`c${v}`}><line x1="26" y1={y} x2="48" y2={y} stroke="#999" strokeWidth="1.3"/><text x="56" y={y+6} fontSize="18" fontWeight="800" fill="#eee">{v}</text></g>);})}
+      <rect x="72" y={ciY-10} width="56" height="20" rx="4" fill={BLV} stroke="#6699dd" strokeWidth="1.5"/>
+      {Array.from({length:8},(_,i)=>i).map(i=><line key={i} x1={78+i*7} y1={ciY-6} x2={78+i*7} y2={ciY+6} stroke="white" strokeWidth="0.8" opacity="0.35"/>)}
+      <polygon points={`70,${ciY} 62,${ciY-7} 62,${ciY+7}`} fill={BLV}/>
+      {coY&&cutOut>=0&&<g><line x1="72" y1={coY} x2="128" y2={coY} stroke={RG} strokeWidth="1.5" strokeDasharray="4,3" opacity="0.8"/><text x="130" y={coY+4} fontSize="10" fontWeight="700" fill={RG}>cut-out</text></g>}
+      <rect x="148" y={T-4} width="118" height={H+8} rx="3" fill="#111" stroke="#333" strokeWidth="1"/>
+      {[0,1,2,3,4].map(v=>{const y=T+(v/4)*H;return(<g key={`d${v}`}><line x1="156" y1={y} x2="180" y2={y} stroke="#999" strokeWidth="1.3"/><text x="188" y={y+6} fontSize="18" fontWeight="800" fill="#eee">{v}</text></g>);})}
+      {[0.5,1.5,2.5,3.5].map(v=>{const y=T+(v/4)*H;return <line key={`dh${v}`} x1="163" y1={y} x2="180" y2={y} stroke="#666" strokeWidth="0.6"/>;})}
+      <rect x="204" y={dY-10} width="50" height="20" rx="4" fill={OR} stroke="#ff9955" strokeWidth="1.5"/>
+      {Array.from({length:7},(_,i)=>i).map(i=><line key={i} x1={210+i*6} y1={dY-6} x2={210+i*6} y2={dY+6} stroke="white" strokeWidth="0.8" opacity="0.35"/>)}
+      <polygon points={`202,${dY} 194,${dY-7} 194,${dY+7}`} fill={OR}/>
+      <circle cx="80" cy="42" r="9" fill="#444" stroke="#666" strokeWidth="1.5"/><line x1="74" y1="42" x2="86" y2="42" stroke="#888" strokeWidth="2.5" strokeLinecap="round"/>
+      <circle cx="206" cy="42" r="9" fill="#444" stroke="#666" strokeWidth="1.5"/><line x1="200" y1="42" x2="212" y2="42" stroke="#888" strokeWidth="2.5" strokeLinecap="round"/>
+      <text x="140" y="260" textAnchor="middle" fontSize="16" fontWeight="900" fill="white" letterSpacing="4">KP1</text>
+    </svg>
+  );
+};
+
+// ═══ TOURNEVIS ═══
+const ScrewDriver=({value,onChange,min,max,step=0.1,color,label,subLabel,invertRotation=false,small=false})=>{
+  const[angle,setAngle]=useState(0);const[flash,setFlash]=useState(null);const iv=useRef(null);
+  const turn=(d)=>{let delta=invertRotation?(d==='right'?-step:step):(d==='right'?step:-step);
+    const nv=Math.round((value+delta)*10)/10;if(nv>=min&&nv<=max){onChange(nv);setAngle(a=>a+(d==='right'?25:-25));setFlash(d);setTimeout(()=>setFlash(null),150);}};
+  const startH=(d)=>{turn(d);iv.current=setInterval(()=>turn(d),110);};
+  const stopH=()=>{if(iv.current){clearInterval(iv.current);iv.current=null;}};
+  const cw=invertRotation?'−':'+',ccw=invertRotation?'+':'−';
+  const sz=small?58:68;
+  return(
+    <div style={{textAlign:'center'}}>
+      <div style={{fontSize:small?12:14,fontWeight:800,color,textTransform:'uppercase',letterSpacing:1}}>{label}</div>
+      {subLabel&&<div style={{fontSize:small?10:12,color:G5,marginBottom:2}}>{subLabel}</div>}
+      <div style={{display:'inline-flex',alignItems:'center',gap:small?4:6}}>
+        <div><div style={{fontSize:9,fontWeight:800,color:G4}}>↺ {ccw}</div>
+          <button onMouseDown={()=>startH('left')} onMouseUp={stopH} onMouseLeave={stopH}
+            onTouchStart={e=>{e.preventDefault();startH('left');}} onTouchEnd={stopH}
+            style={{width:small?36:44,height:small?40:48,borderRadius:8,border:`2px solid ${flash==='left'?color:G2}`,background:flash==='left'?color+'22':W,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </button></div>
+        <svg width={sz} height={sz} viewBox="0 0 68 68">
+          <circle cx="34" cy="34" r="24" fill="#3a3a3a" stroke="#222" strokeWidth="2"/><circle cx="34" cy="34" r="20" fill="#4a4a4a"/>
+          <line x1="16" y1="34" x2="52" y2="34" stroke="#2a2a2a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${angle},34,34)`} style={{transition:'transform 0.12s'}}/>
+          <g transform={`rotate(${angle},34,34)`} style={{transition:'transform 0.12s'}}>
+            <rect x="31" y="2" width="6" height="12" rx="1.5" fill="#e8a030"/><rect x="32.5" y="10" width="3" height="6" rx="0.5" fill="#999"/>
+          </g>
+        </svg>
+        <div><div style={{fontSize:9,fontWeight:800,color:G4}}>{cw} ↻</div>
+          <button onMouseDown={()=>startH('right')} onMouseUp={stopH} onMouseLeave={stopH}
+            onTouchStart={e=>{e.preventDefault();startH('right');}} onTouchEnd={stopH}
+            style={{width:small?36:44,height:small?40:48,borderRadius:8,border:`2px solid ${flash==='right'?color:G2}`,background:flash==='right'?color+'22':W,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 1 0-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          </button></div>
+      </div>
+      <div style={{fontSize:small?22:26,fontWeight:900,fontFamily:'monospace',color}}>{value.toFixed(1)} <span style={{fontSize:12}}>bar</span></div>
+    </div>
+  );
+};
+
+// ═══ CROIX DU FRIGORISTE COMPACTE ═══
+const CroixFrigo=({compOn,evOpen,pression})=>{
+  const[tick,setTick]=useState(0);
+  useEffect(()=>{const iv=setInterval(()=>setTick(t=>t+1),70);return()=>clearInterval(iv);},[]);
+  const Dots=({pts,color,active,count=4})=>{
+    if(!active)return null;
+    return Array.from({length:count},(_,i)=>{
+      const t=((tick*2.5+i*(100/count))%100)/100;
+      const seg=Math.floor(t*pts.length);const lt=(t*pts.length)%1;
+      const s=pts[Math.min(seg,pts.length-1)],e=pts[Math.min(seg+1,pts.length-1)]||s;
+      return <circle key={i} cx={s[0]+(e[0]-s[0])*lt} cy={s[1]+(e[1]-s[1])*lt} r="3.5" fill={color} opacity="0.8"/>;
+    });
+  };
+  // 480x340
+  return(
+    <svg viewBox="0 0 480 340" style={{width:'100%',maxWidth:520,display:'block',margin:'0 auto'}}>
+      {/* Tuyaux HP: Comp→Cond */}
+      <path d="M 400,145 L 400,50 L 290,50" stroke={HP_C} strokeWidth="6" fill="none" strokeLinecap="round"/>
+      <Dots pts={[[400,145],[400,50],[290,50]]} color="#ff7777" active={compOn} count={4}/>
+      {/* Cond→EV */}
+      <path d="M 190,50 L 70,50 L 70,115" stroke={LIQ_C} strokeWidth="6" fill="none" strokeLinecap="round"/>
+      <Dots pts={[[190,50],[70,50],[70,115]]} color="#ffaa44" active={compOn} count={3}/>
+      {/* EV→Dét */}
+      <path d="M 70,155 L 70,185" stroke={evOpen?LIQ_C:'#888'} strokeWidth="6" fill="none" strokeLinecap="round" strokeDasharray={evOpen?'none':'6,4'}/>
+      {/* Dét→Évap */}
+      <path d="M 70,210 L 70,290 L 190,290" stroke={BP_C} strokeWidth="6" fill="none" strokeLinecap="round"/>
+      <Dots pts={[[70,210],[70,290],[190,290]]} color="#66aaff" active={compOn&&evOpen} count={3}/>
+      {/* Évap→Comp */}
+      <path d="M 290,290 L 400,290 L 400,195" stroke={BP_C} strokeWidth="6" fill="none" strokeLinecap="round"/>
+      <Dots pts={[[290,290],[400,290],[400,195]]} color="#66aaff" active={compOn} count={4}/>
+      {/* CONDENSEUR */}
+      <rect x="190" y="28" width="100" height="44" rx="7" fill="#fff0e0" stroke={HP_C} strokeWidth="2.5"/>
+      <text x="240" y="47" textAnchor="middle" fontSize="11" fontWeight="800" fill={HP_C}>CONDENSEUR</text>
+      <text x="240" y="63" textAnchor="middle" fontSize="11" fill="#cc5500">🌬️ HP</text>
+      {/* COMPRESSEUR */}
+      <circle cx="400" cy="170" r="30" fill={compOn?'#1a5c2e':'#555'} stroke={compOn?'#22c55e':'#888'} strokeWidth="2.5"/>
+      <text x="400" y="166" textAnchor="middle" fontSize="10" fontWeight="800" fill="white">COMP</text>
+      <text x="400" y="182" textAnchor="middle" fontSize="16" fill="white">{compOn?'⚡':'⏸'}</text>
+      {/* DÉTENDEUR */}
+      <polygon points="57,185 83,198 57,211" fill={LIQ_C} stroke={BL} strokeWidth="1.5"/>
+      <polygon points="83,185 57,198 83,211" fill={LIQ_C} stroke={BL} strokeWidth="1.5"/>
+      <text x="70" y="228" textAnchor="middle" fontSize="9" fontWeight="800" fill="#b45309">DÉTENDEUR</text>
+      {/* ÉLECTROVANNE */}
+      <rect x="47" y="115" width="46" height="40" rx="4" fill={evOpen?'#d4edda':'#f8d7da'} stroke={evOpen?VT:RG} strokeWidth="2"/>
+      <text x="70" y="132" textAnchor="middle" fontSize="7" fontWeight="800" fill={evOpen?VT:RG}>ÉLECTRO-</text>
+      <text x="70" y="141" textAnchor="middle" fontSize="7" fontWeight="800" fill={evOpen?VT:RG}>VANNE</text>
+      <text x="70" y="153" textAnchor="middle" fontSize="9" fontWeight="900" fill={evOpen?VT:RG}>{evOpen?'OUVERT':'FERMÉ'}</text>
+      {/* ÉVAPORATEUR */}
+      <rect x="190" y="268" width="100" height="44" rx="7" fill="#e0eeff" stroke={BP_C} strokeWidth="2.5"/>
+      <text x="240" y="287" textAnchor="middle" fontSize="11" fontWeight="800" fill={BP_C}>ÉVAPORATEUR</text>
+      <text x="240" y="303" textAnchor="middle" fontSize="11" fill={BP_C}>❄️ BP</text>
+      {/* PRESSOSTAT BP */}
+      <rect x="415" y="220" width="56" height="30" rx="4" fill={compOn?VTP:RGP} stroke={compOn?VT:RG} strokeWidth="2"/>
+      <text x="443" y="234" textAnchor="middle" fontSize="7" fontWeight="800" fill={compOn?VT:RG}>PRESSOSTAT</text>
+      <text x="443" y="245" textAnchor="middle" fontSize="9" fontWeight="900" fill={compOn?VT:RG}>BP (KP1)</text>
+      <rect x="415" y="252" width="56" height="16" rx="3" fill={compOn?'#166534':'#991b1b'}/>
+      <text x="443" y="264" textAnchor="middle" fontSize="10" fontWeight="900" fill="white">{pression.toFixed(1)} bar</text>
+    </svg>
+  );
+};
+
+// ═══ SIMULATION ENGINE ═══
+// Physique correcte : fonctionnement normal = BP stable
+// Pump-down (EV fermée) = BP descend
+const useSimulation=({cutIn,cutOut,running})=>{
+  const[p,setP]=useState(cutIn);
+  const[compOn,setCompOn]=useState(true);
+  const[evOpen,setEvOpen]=useState(true);
+  const[phase,setPhase]=useState('stable'); // stable, pumpdown, stopped, refill
+  const[log,setLog]=useState([]);
+
+  const addLog=(msg)=>setLog(l=>[{t:Date.now(),msg},...l].slice(0,8));
+
+  const toggleEV=useCallback(()=>{
+    const newState=!evOpen;
+    setEvOpen(newState);
+    if(!newState){
+      setPhase('pumpdown');
+      addLog('🔴 Thermostat satisfait → EV FERMÉE → Pump-down');
+    }else{
+      setPhase(compOn?'stable':'refill');
+      addLog('🟢 Thermostat demande → EV OUVERTE');
+    }
+  },[evOpen,compOn]);
+
+  const reset=useCallback(()=>{
+    setP(cutIn);setCompOn(true);setEvOpen(true);setPhase('stable');setLog([{t:Date.now(),msg:'▶ Installation en marche — fonctionnement normal'}]);
+  },[cutIn]);
+
+  useEffect(()=>{
+    if(!running)return;
+    const iv=setInterval(()=>{
+      setP(prev=>{
+        let np=prev;
+        if(compOn&&evOpen){
+          // NORMAL: BP stabilisée autour d'une valeur d'exploitation
+          // Légère oscillation naturelle autour du cut-in - 0.3
+          const target=cutIn-0.3;
+          np+=(target-np)*0.08+(Math.random()-0.5)*0.02;
+          setPhase('stable');
+        }else if(compOn&&!evOpen){
+          // PUMP-DOWN: compresseur tourne, EV fermée → BP chute
+          np-=0.07;
+          if(np<=cutOut){
+            np=cutOut;
+            setCompOn(false);
+            setPhase('stopped');
+            addLog('🔴 Cut-out ('+cutOut.toFixed(1)+' bar) → Compresseur ARRÊT');
+          }
+        }else if(!compOn&&evOpen){
+          // REFILL: compresseur arrêté, EV ouverte → BP remonte
+          np+=0.05;
+          if(np>=cutIn){
+            np=cutIn;
+            setCompOn(true);
+            setPhase('stable');
+            addLog('🟢 Cut-in ('+cutIn.toFixed(1)+' bar) → Compresseur MARCHE');
+          }
+        }
+        // !compOn && !evOpen → stable, rien ne bouge
+        return Math.round(np*100)/100;
+      });
+    },80);
+    return()=>clearInterval(iv);
+  },[running,compOn,evOpen,cutIn,cutOut]);
+
+  return{p,compOn,evOpen,phase,log,toggleEV,reset};
+};
+
+const TablePT=({gaz})=>{const d=GAZ[gaz];return(
+  <table style={{borderCollapse:'collapse',fontSize:14}}>
+    <thead><tr><th style={{padding:'4px 10px',background:G1,fontWeight:800,color:G7}}>°C</th>
+    <th style={{padding:'4px 10px',background:G1,fontWeight:800,color:d.col}}>bar</th></tr></thead>
+    <tbody>{d.pt.map(([t,p],i)=>(
+      <tr key={i} style={{background:i%2===0?W:G0}}><td style={{padding:'3px 10px',fontWeight:700,color:G7,textAlign:'center'}}>{t}</td>
+      <td style={{padding:'3px 10px',fontWeight:800,color:d.col,textAlign:'center',fontFamily:'monospace'}}>{p.toFixed(2)}</td></tr>))}</tbody>
+  </table>
+);};
+
+const GazSel=({value,onChange})=>(
+  <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+    {Object.entries(GAZ).map(([k,g])=>(
+      <button key={k} onClick={()=>onChange(k)} style={{padding:'5px 10px',borderRadius:7,border:`2px solid ${value===k?g.col:G2}`,background:value===k?g.col+'18':W,color:value===k?g.col:G5,fontWeight:700,fontSize:12,textAlign:'left'}}>
+        <span style={{fontWeight:900}}>{g.nom}</span><br/><span style={{fontSize:10,opacity:0.7}}>{g.usage}</span></button>
+    ))}
+  </div>
+);
+
+// ═══════════ APP ═══════════
+const App=()=>{
+  const[tab,setTab]=useState('cours');
+  const[slide,setSlide]=useState(0);
+  const[gaz,setGaz]=useState('R404A');
+  // Slide 4 interactive
+  const[s4CI,setS4CI]=useState(3.25);
+  const[s4Diff,setS4Diff]=useState(2.5);
+  // Slide 7 - teacher adjustable
+  const[s7CI,setS7CI]=useState(3.25);
+  const[s7Diff,setS7Diff]=useState(2.75);
+  const[s7Running,setS7Running]=useState(false);
+  const s7CO=Math.round((s7CI-s7Diff)*100)/100;
+  const sim7=useSimulation({cutIn:s7CI,cutOut:s7CO,running:s7Running});
+  // Exercises
+  const[exo,setExo]=useState(null);
+  const[exoRes,setExoRes]=useState(null);
+  const[exoLevel,setExoLevel]=useState(1);
+  const[cutInVal,setCutIn]=useState(3.0);
+  const[diffVal,setDiff]=useState(1.0);
+  const[showTable,setShowTable]=useState(false);
+  const[showSol,setShowSol]=useState(false);
+  const[score,setScore]=useState({ok:0,ko:0});
+  const[exoSimRun,setExoSimRun]=useState(false);
+  const exoCO=Math.round((cutInVal-diffVal)*100)/100;
+  const exoSim=useSimulation({cutIn:cutInVal,cutOut:exoCO>=0?exoCO:0,running:exoSimRun});
+
+  const s4CO=Math.round((s4CI-s4Diff)*100)/100;
+
+  const genExo=useCallback(()=>{
+    const keys=Object.keys(GAZ);const rG=keys[Math.floor(Math.random()*keys.length)];
+    const pts=GAZ[rG].pt;const minT=pts[2][0],maxT=pts[pts.length-3][0];
+    const tempEvap=Math.round((minT+Math.random()*(maxT-minT))/5)*5;
+    const pCI=Math.round(t2p(rG,tempEvap)*10)/10;
+    const minCO=Math.max(0.2,Math.round(pCI*0.15*10)/10);
+    const maxCO=Math.round((pCI-0.5)*10)/10;
+    const pCO=Math.max(0.2,Math.round((minCO+Math.random()*(Math.max(0,maxCO-minCO)))*10)/10);
+    setExo({gaz:rG,tempEvap,cutOut:pCO,pCutIn:pCI});
+    setGaz(rG);setExoRes(null);setShowSol(false);setCutIn(2.0);setDiff(1.0);setExoSimRun(false);
+  },[]);
+
+  const validerExo=useCallback(()=>{
+    if(!exo)return;const dA=Math.round((exo.pCutIn-exo.cutOut)*10)/10;
+    if(Math.abs(cutInVal-exo.pCutIn)<0.2&&Math.abs(diffVal-dA)<0.2){
+      setExoRes('ok');setScore(s=>({...s,ok:s.ok+1}));
+    }else{setExoRes('ko');setScore(s=>({...s,ko:s.ko+1}));}
+  },[exo,cutInVal,diffVal]);
+
+  const solution=useMemo(()=>exo?{pCutIn:exo.pCutIn,cutOut:exo.cutOut,diff:Math.round((exo.pCutIn-exo.cutOut)*10)/10}:null,[exo]);
+
+  // SLIDES
+  const slides=[
+    // 0: Titre
+    ()=><div style={{textAlign:'center',padding:'50px 20px'}}>
+      <Logo size="big"/>
+      <h1 style={{fontSize:34,fontWeight:900,color:BL,marginTop:18}}>Le Pressostat Basse Pression</h1>
+      <p style={{fontSize:20,color:G5,marginTop:8}}>Danfoss type KP1</p>
+      <p style={{fontSize:14,color:G4,marginTop:6,fontStyle:'italic'}}>D'autres modèles existent, mais Danfoss reste l'un des plus courants en Europe.</p>
+      <p style={{fontSize:16,color:G5,marginTop:20}}>CAP IFCA · Bac Pro MFER · Section Froid & Climatisation</p>
+    </div>,
+    // 1: C'est quoi
+    ()=><div>
+      <h2 style={{fontSize:24,fontWeight:800,color:BL,marginBottom:14}}>❶ C'est quoi un pressostat BP ?</h2>
+      <p style={{fontSize:16,color:G7,marginBottom:12}}>Un <strong>organe de sécurité et de régulation</strong> sur l'aspiration du compresseur.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:16}}>
+        <div style={{background:VTP,borderRadius:12,padding:16,borderLeft:`4px solid ${VT}`}}>
+          <div style={{fontSize:17,fontWeight:800,color:VT}}>🟢 Démarrer</div>
+          <div style={{fontSize:15,color:G7,marginTop:4}}>Pression remonte au <strong>cut-in</strong></div>
+        </div>
+        <div style={{background:RGP,borderRadius:12,padding:16,borderLeft:`4px solid ${RG}`}}>
+          <div style={{fontSize:17,fontWeight:800,color:RG}}>🔴 Arrêter</div>
+          <div style={{fontSize:15,color:G7,marginTop:4}}>Pression chute au <strong>cut-out</strong></div>
+        </div>
+      </div>
+      <div style={{background:ORP,borderRadius:10,padding:14,border:`1.5px solid ${ORD}`}}>
+        <strong style={{color:OR}}>⚠️ Sans pressostat BP ?</strong> Fonctionnement en vide → surchauffe, usure, entrées d'air.
+      </div>
+    </div>,
+    // 2: Vocabulaire
+    ()=><div>
+      <h2 style={{fontSize:24,fontWeight:800,color:BL,marginBottom:14}}>❷ Les 3 mots-clés</h2>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14,marginBottom:16}}>
+        <div style={{background:BLP,borderRadius:12,padding:16,borderTop:`4px solid ${BL}`}}>
+          <div style={{fontSize:20,fontWeight:900,color:BL}}>CUT-IN</div>
+          <div style={{fontSize:12,color:G4}}>Enclenchement / RANGE</div>
+          <div style={{fontSize:14,color:G7,marginTop:4}}>Pression de <strong>démarrage</strong>. Table P/T.</div>
+        </div>
+        <div style={{background:RGP,borderRadius:12,padding:16,borderTop:`4px solid ${RG}`}}>
+          <div style={{fontSize:20,fontWeight:900,color:RG}}>CUT-OUT</div>
+          <div style={{fontSize:12,color:G4}}>Coupure / Arrêt</div>
+          <div style={{fontSize:14,color:G7,marginTop:4}}>Pression mini. <strong>Cahier des charges</strong>.</div>
+        </div>
+        <div style={{background:ORP,borderRadius:12,padding:16,borderTop:`4px solid ${OR}`}}>
+          <div style={{fontSize:20,fontWeight:900,color:OR}}>DIFF</div>
+          <div style={{fontSize:12,color:G4}}>Différentiel / Écart</div>
+          <div style={{fontSize:14,color:G7,marginTop:4}}><strong>À calculer</strong> et régler.</div>
+        </div>
+      </div>
+      <div style={{background:'#fefce8',border:'2px solid #fde68a',borderRadius:12,padding:16,textAlign:'center'}}>
+        <div style={{fontSize:26,fontWeight:900,fontFamily:'monospace',color:G9}}>DIFF = CUT-IN − CUT-OUT</div>
+        <div style={{fontSize:14,color:'#92400e',marginTop:6}}>⚠️ La vis DIFF affiche un <strong>écart</strong>, pas le cut-out !</div>
+      </div>
+    </div>,
+    // 3: Contacts
+    ()=><div>
+      <h2 style={{fontSize:24,fontWeight:800,color:BL,marginBottom:12}}>❸ Contacts 1 – 2 – 4 (SPDT)</h2>
+      <p style={{fontSize:15,color:G7,marginBottom:14}}>Inverseur : borne <strong>1</strong> (commun) bascule entre <strong>4</strong> (moteur) et <strong>2</strong> (signal).</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div><div style={{fontSize:15,fontWeight:700,color:VT,marginBottom:6}}>▶ Pression OK → 1-4 → MARCHE</div><Contacts124 compOn={true}/></div>
+        <div><div style={{fontSize:15,fontWeight:700,color:RG,marginBottom:6}}>▶ Cut-out → 1-2 → ARRÊT</div><Contacts124 compOn={false}/></div>
+      </div>
+    </div>,
+    // 4: Face avant + mano + contacts INTERACTIFS
+    ()=><div>
+      <h2 style={{fontSize:22,fontWeight:800,color:BL,marginBottom:10}}>❹ La face avant du KP1 — Manipule les vis !</h2>
+      <div style={{display:'grid',gridTemplateColumns:'auto 1fr auto',gap:14,alignItems:'start'}}>
+        {/* KP1 + vis */}
+        <div style={{textAlign:'center'}}>
+          <KP1Face cutIn={s4CI} diff={s4Diff} gaz="R404A" small={true}/>
+          <div style={{display:'flex',justifyContent:'center',gap:14,marginTop:10}}>
+            <ScrewDriver value={s4CI} onChange={setS4CI} min={0} max={7} color={BLV} label="CUT IN" subLabel="↻ = +" invertRotation={false} small={true}/>
+            <ScrewDriver value={s4Diff} onChange={setS4Diff} min={0.2} max={4} color={OR} label="DIFF" subLabel="↻ = − !" invertRotation={true} small={true}/>
+          </div>
+        </div>
+        {/* Mano qui réagit */}
+        <div style={{textAlign:'center'}}>
+          <Mano pression={s4CI} gaz="R404A" cutOut={s4CO>=0?s4CO:null} cutIn={s4CI} size={280} showDigital={false}/>
+          <div style={{fontSize:14,color:G7,marginTop:4}}>
+            <strong style={{color:BLV}}>Cut-in : {s4CI.toFixed(1)} bar</strong> · <strong style={{color:OR}}>Diff : {s4Diff.toFixed(1)} bar</strong> · <strong style={{color:s4CO<0?RG:G9}}>Cut-out : {s4CO.toFixed(1)} bar</strong>
+          </div>
+        </div>
+        {/* Contacts qui réagissent */}
+        <div>
+          <Contacts124 compOn={s4CO>=0} compact={true}/>
+          <div style={{background:s4CO>=0?VTP:RGP,borderRadius:8,padding:10,marginTop:8,textAlign:'center'}}>
+            <div style={{fontSize:14,fontWeight:800,color:s4CO>=0?VT:RG}}>
+              {s4CO<0?'⚠️ Cut-out négatif !':'✓ Réglage valide'}
+            </div>
+          </div>
+          <div style={{marginTop:10,fontSize:12,color:G5,lineHeight:1.6,padding:'0 4px'}}>
+            <strong>⚠️ Sens des vis :</strong><br/>
+            Valeurs ↓ vers le bas<br/>
+            CUT IN : ↻ = +<br/>
+            DIFF : ↻ = − (inversé!)
+          </div>
+        </div>
+      </div>
+    </div>,
+    // 5: Rappel P/T
+    ()=><div>
+      <h2 style={{fontSize:24,fontWeight:800,color:BL,marginBottom:4}}>❺ Rappel : Pression / Température</h2>
+      <p style={{fontSize:13,color:G4,fontStyle:'italic',marginBottom:10}}>Chaque gaz a son propre rapport P/T. Vous connaissez déjà ce principe.</p>
+      <GazSel value={gaz} onChange={setGaz}/>
+      <div style={{display:'flex',gap:20,marginTop:10,alignItems:'start',justifyContent:'center',flexWrap:'wrap'}}>
+        <TablePT gaz={gaz}/>
+        <Mano pression={t2p(gaz,-5)} gaz={gaz} cutOut={null} cutIn={null} size={380} showDigital={false}/>
+      </div>
+      <div style={{marginTop:8,fontSize:15,color:G7,textAlign:'center'}}>
+        <strong>Ex :</strong> En {GAZ[gaz].nom}, −10°C = <strong>{t2p(gaz,-10).toFixed(2)} bar</strong> → CUT IN
+      </div>
+    </div>,
+    // 6: Méthode
+    ()=><div style={{background:BL,borderRadius:14,padding:'24px 22px',color:'white'}}>
+      <h2 style={{fontSize:24,fontWeight:800,marginBottom:18}}>❻ Méthode de réglage en 5 étapes</h2>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
+        {[{t:'Identifier le gaz',x:'Quel fluide ?',icon:'🔍'},
+          {t:'T° d\'évaporation',x:'Consigne → Cut-in',icon:'🌡️'},
+          {t:'Table P/T',x:'°C → bar',icon:'📊'},
+          {t:'Cut-out',x:'BP mini (cahier)',icon:'📋'},
+          {t:'Calculer DIFF',x:'Cut-in − Cut-out',icon:'🔧'}
+        ].map((e,i)=>(
+          <div key={i} style={{background:'rgba(255,255,255,0.1)',borderRadius:10,padding:14,borderLeft:`3px solid ${OR}`,textAlign:'center'}}>
+            <div style={{fontSize:28}}>{e.icon}</div>
+            <div style={{fontSize:14,fontWeight:800,marginTop:6}}>{e.t}</div>
+            <div style={{fontSize:12,opacity:0.85,marginTop:3}}>{e.x}</div>
+          </div>
+        ))}
+      </div>
+    </div>,
+    // 7: CYCLE FRIGO — UNE SEULE SLIDE
+    ()=>{
+      return(
+      <div>
+        <h2 style={{fontSize:22,fontWeight:800,color:OR,marginBottom:8}}>❼ Le cycle en action — Pump-down</h2>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,alignItems:'start'}}>
+          {/* Gauche: Circuit + contrôles */}
+          <div>
+            <CroixFrigo compOn={sim7.compOn} evOpen={sim7.evOpen} pression={sim7.p}/>
+            {/* Réglages enseignant — style KP1 */}
+            <div style={{background:'#1e1e1e',borderRadius:10,padding:'10px 14px',marginTop:10,border:'2px solid #444'}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#888',textAlign:'center',marginBottom:6,letterSpacing:1}}>⚙️ RÉGLAGES ENSEIGNANT</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1px 1fr',gap:10}}>
+                {/* CUT IN vertical */}
+                <div style={{textAlign:'center'}}>
+                  <div style={{fontSize:14,fontWeight:800,color:'#6699dd',letterSpacing:2}}>CUT IN</div>
+                  <input type="range" min="0.5" max="7" step="0.1" value={s7CI}
+                    orient="vertical"
+                    onChange={e=>{setS7CI(+e.target.value);setS7Running(false);}}
+                    style={{writingMode:'vertical-lr',direction:'rtl',height:120,width:32,accentColor:BLV,margin:'6px auto',display:'block',cursor:'pointer'}}/>
+                  <div style={{fontSize:22,fontWeight:900,fontFamily:'monospace',color:'#6699dd'}}>{s7CI.toFixed(1)}<span style={{fontSize:11,color:'#888'}}> bar</span></div>
+                </div>
+                {/* Séparateur */}
+                <div style={{background:'#444'}}/>
+                {/* DIFF vertical */}
+                <div style={{textAlign:'center'}}>
+                  <div style={{fontSize:14,fontWeight:800,color:'#ff9955',letterSpacing:2}}>DIFF</div>
+                  <input type="range" min="0.3" max="4" step="0.1" value={s7Diff}
+                    orient="vertical"
+                    onChange={e=>{setS7Diff(+e.target.value);setS7Running(false);}}
+                    style={{writingMode:'vertical-lr',direction:'rtl',height:120,width:32,accentColor:OR,margin:'6px auto',display:'block',cursor:'pointer'}}/>
+                  <div style={{fontSize:22,fontWeight:900,fontFamily:'monospace',color:'#ff9955'}}>{s7Diff.toFixed(1)}<span style={{fontSize:11,color:'#888'}}> bar</span></div>
+                </div>
+              </div>
+              {/* Cut-out calculé */}
+              <div style={{textAlign:'center',marginTop:6,padding:'6px 0',background:s7CO>=0?'#1a2e1a':'#2e1a1a',borderRadius:6}}>
+                <span style={{fontSize:13,fontWeight:800,color:s7CO>=0?'#86efac':'#fca5a5'}}>→ CUT-OUT : {s7CO.toFixed(1)} bar</span>
+              </div>
+            </div>
+            {/* Boutons */}
+            <div style={{display:'flex',gap:8,marginTop:8}}>
+              {!s7Running?
+                <button onClick={()=>{setS7Running(true);sim7.reset();}} style={{padding:'10px 22px',borderRadius:10,background:VT,color:'white',fontWeight:800,fontSize:14}}>▶ Démarrer</button>:
+                <>
+                  <button onClick={sim7.toggleEV} style={{padding:'10px 18px',borderRadius:10,background:sim7.evOpen?RG:VT,color:'white',fontWeight:800,fontSize:13}}>
+                    {sim7.evOpen?'Fermer EV':'Ouvrir EV'}</button>
+                  <button onClick={()=>setS7Running(false)} style={{padding:'10px 14px',borderRadius:10,background:'#555',color:'white',fontWeight:800,fontSize:13}}>⏹ Stop</button>
+                </>
+              }
+            </div>
+            {/* Log */}
+            {sim7.log.length>0&&<div style={{marginTop:6,padding:8,background:G0,borderRadius:6,maxHeight:90,overflow:'auto'}}>
+              {sim7.log.slice(0,4).map((l,i)=><div key={i} style={{fontSize:11,color:i===0?G9:G4,fontWeight:i===0?700:400}}>{l.msg}</div>)}
+            </div>}
+          </div>
+          {/* Droite: Mano + Contacts */}
+          <div>
+            <Mano pression={s7Running?sim7.p:s7CI} gaz={gaz} cutOut={s7CO>=0?s7CO:null} cutIn={s7CI} size={300}/>
+            <Contacts124 compOn={s7Running?sim7.compOn:true} compact={true}/>
+            <div style={{marginTop:6,padding:10,background:sim7.compOn?VTP:RGP,borderRadius:8,textAlign:'center'}}>
+              <div style={{fontSize:15,fontWeight:800,color:sim7.compOn?VT:RG}}>
+                {sim7.compOn?'⚡ Compresseur MARCHE':'🛑 Compresseur ARRÊT'}
+              </div>
+              <div style={{fontSize:12,color:G7}}>
+                {sim7.phase==='stable'&&'Fonctionnement normal — BP stabilisée'}
+                {sim7.phase==='pumpdown'&&'Pump-down en cours — BP chute ⬇'}
+                {sim7.phase==='stopped'&&(sim7.evOpen?'Pression remonte ⬆':'Arrêté — EV fermée')}
+                {sim7.phase==='refill'&&'Pression remonte — EV ouverte ⬆'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>);
+    },
+  ];
+
+  const totalSlides=slides.length;
+
+  const tabBtn=(a)=>({display:'flex',alignItems:'center',gap:8,padding:'10px 24px',borderRadius:100,fontWeight:700,fontSize:15,
+    background:a?BL:W,color:a?W:BL,boxShadow:a?'0 3px 14px rgba(27,58,99,0.3)':`inset 0 0 0 2px ${BL}`,transition:'all 0.2s'});
+
+  return(
+    <div style={{maxWidth:1100,margin:'0 auto',padding:'12px 14px'}}>
+      <AccessBar/>
+      <div style={{display:'flex',justifyContent:'center',gap:10,marginBottom:12}} className="no-print">
+        <button style={tabBtn(tab==='cours')} onClick={()=>setTab('cours')}>📖 Cours</button>
+        <button style={tabBtn(tab==='exercices')} onClick={()=>setTab('exercices')}>🎯 Exercices</button>
+      </div>
+
+      {/* ═══ COURS MODE SLIDE ═══ */}
+      {tab==='cours'&&<div>
+        <div className="slide-card" style={{background:W,borderRadius:16,padding:'28px 32px',minHeight:480,border:`1.5px solid ${G2}`,boxShadow:'0 4px 20px rgba(0,0,0,0.08)'}}>
+          {slides[slide]()}
+        </div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:14,marginTop:12}} className="no-print">
+          <button onClick={()=>{setSlide(s=>Math.max(0,s-1));setS7Running(false);}} disabled={slide===0}
+            style={{width:44,height:44,borderRadius:10,background:slide===0?G2:BL,color:'white',fontWeight:900,fontSize:18,opacity:slide===0?0.5:1}}>◀</button>
+          <div style={{display:'flex',gap:5}}>
+            {slides.map((_,i)=><button key={i} onClick={()=>{setSlide(i);setS7Running(false);}} style={{width:i===slide?28:10,height:10,borderRadius:5,background:i===slide?BL:G2,transition:'all 0.2s'}}/>)}
+          </div>
+          <button onClick={()=>{setSlide(s=>Math.min(totalSlides-1,s+1));setS7Running(false);}} disabled={slide===totalSlides-1}
+            style={{width:44,height:44,borderRadius:10,background:slide===totalSlides-1?G2:BL,color:'white',fontWeight:900,fontSize:18,opacity:slide===totalSlides-1?0.5:1}}>▶</button>
+        </div>
+        <div style={{textAlign:'center',fontSize:12,color:G4,marginTop:4}}>{slide+1} / {totalSlides}</div>
+      </div>}
+
+      {/* ═══ EXERCICES PROGRESSIFS ═══ */}
+      {tab==='exercices'&&<div>
+        <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap',alignItems:'center'}} className="no-print">
+          <button onClick={()=>{genExo();setExoSimRun(false);}} style={{padding:'12px 24px',borderRadius:10,background:OR,color:'white',fontWeight:800,fontSize:16}}>
+            🎯 {exo?'Nouvel exercice':'Commencer'}</button>
+          <div style={{display:'flex',gap:3}}>
+            {[1,2,3].map(l=><button key={l} onClick={()=>setExoLevel(l)} style={{
+              padding:'6px 14px',borderRadius:7,fontWeight:700,fontSize:13,
+              background:exoLevel===l?BL:W,color:exoLevel===l?W:BL,border:`2px solid ${exoLevel===l?BL:G2}`,
+            }}>Niv.{l}</button>)}
+          </div>
+          <span style={{fontSize:11,color:G4,fontStyle:'italic'}}>
+            {exoLevel===1?'Guidé':''}
+            {exoLevel===2?'Intermédiaire':''}
+            {exoLevel===3?'Expert — lis le mano !':''}
+          </span>
+          {(score.ok>0||score.ko>0)&&<div style={{fontSize:15,fontWeight:700}}><span style={{color:VT}}>✓{score.ok}</span> <span style={{color:RG}}>✗{score.ko}</span></div>}
+        </div>
+
+        {!exo?<div className="exo-card" style={{background:W,borderRadius:14,padding:50,textAlign:'center',border:`1.5px solid ${G2}`}}>
+          <div style={{fontSize:50}}>🔧</div>
+          <h2 style={{fontSize:20,fontWeight:800,color:BL,marginTop:10}}>Prêt à régler un pressostat ?</h2>
+          <p style={{fontSize:15,color:G5,maxWidth:400,margin:'10px auto',lineHeight:1.8}}>Choisis un <strong>niveau</strong> puis clique <strong>Commencer</strong>.</p>
+        </div>:(
+          <>
+            {/* Mission */}
+            <div className="exo-card" style={{background:W,borderRadius:14,padding:'18px 22px',border:`1.5px solid ${G2}`,borderLeft:`5px solid ${GAZ[exo.gaz].col}`,marginBottom:14}}>
+              <div style={{display:'flex',flexWrap:'wrap',gap:12}}>
+                <div style={{padding:'10px 16px',background:GAZ[exo.gaz].col+'15',borderRadius:10}}>
+                  <div style={{fontSize:9,fontWeight:800,color:G4,textTransform:'uppercase'}}>Fluide</div>
+                  <div style={{fontSize:20,fontWeight:900,color:GAZ[exo.gaz].col}}>{GAZ[exo.gaz].nom}</div>
+                </div>
+                <div style={{padding:'10px 16px',background:BLP,borderRadius:10}}>
+                  <div style={{fontSize:9,fontWeight:800,color:G4,textTransform:'uppercase'}}>T° évap.</div>
+                  <div style={{fontSize:20,fontWeight:900,color:BL}}>{exo.tempEvap}°C</div>
+                </div>
+                <div style={{padding:'10px 16px',background:RGP,borderRadius:10}}>
+                  <div style={{fontSize:9,fontWeight:800,color:G4,textTransform:'uppercase'}}>Cut-out</div>
+                  <div style={{fontSize:20,fontWeight:900,color:RG}}>{exo.cutOut.toFixed(1)} bar</div>
+                </div>
+              </div>
+              {exoLevel===1&&<div style={{marginTop:10,fontSize:14,color:G7,background:G0,padding:12,borderRadius:8}}>
+                👉 Table P/T → {exo.tempEvap}°C en {GAZ[exo.gaz].nom} = ? bar → DIFF = Cut-in − {exo.cutOut.toFixed(1)}
+              </div>}
+            </div>
+
+            {/* Zone de travail */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:14,marginBottom:14}}>
+              <div className="exo-card no-print" style={{background:W,borderRadius:14,padding:'18px 20px',border:`1.5px solid ${G2}`}}>
+                <KP1Face cutIn={cutInVal} diff={diffVal} gaz={gaz} small={true}/>
+                <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:10}}>
+                  <ScrewDriver value={cutInVal} onChange={v=>{setCutIn(v);setExoSimRun(false);}} min={0} max={10} color={BLV} label="CUT IN" subLabel="↻ = +" invertRotation={false} small={true}/>
+                  <ScrewDriver value={diffVal} onChange={v=>{setDiff(v);setExoSimRun(false);}} min={0.2} max={4} color={OR} label="DIFF" subLabel="↻ = −" invertRotation={true} small={true}/>
+                </div>
+              </div>
+              <div className="exo-card" style={{background:W,borderRadius:14,padding:'18px 20px',border:`1.5px solid ${G2}`}}>
+                <Mano pression={exoSimRun?exoSim.p:exoCO>=0?cutInVal:0} gaz={gaz} cutOut={exoCO>=0?exoCO:null} cutIn={cutInVal}
+                  size={340} showDigital={exoLevel<3}/>
+                {exoLevel<3&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginTop:8}}>
+                  <div style={{textAlign:'center',padding:8,background:BLP,borderRadius:6}}>
+                    <div style={{fontSize:9,fontWeight:800,color:G4}}>CUT-IN</div>
+                    <div style={{fontSize:18,fontWeight:900,color:BL,fontFamily:'monospace'}}>{cutInVal.toFixed(1)}</div>
+                    {exoLevel===1&&<div style={{fontSize:11,color:BL}}>{p2t(gaz,cutInVal).toFixed(0)}°C</div>}
+                  </div>
+                  <div style={{textAlign:'center',padding:8,background:ORP,borderRadius:6}}>
+                    <div style={{fontSize:9,fontWeight:800,color:G4}}>DIFF</div>
+                    <div style={{fontSize:18,fontWeight:900,color:OR,fontFamily:'monospace'}}>{diffVal.toFixed(1)}</div>
+                  </div>
+                  <div style={{textAlign:'center',padding:8,background:exoCO<0?RGP:G1,borderRadius:6}}>
+                    <div style={{fontSize:9,fontWeight:800,color:G4}}>CUT-OUT</div>
+                    <div style={{fontSize:18,fontWeight:900,color:exoCO<0?RG:G9,fontFamily:'monospace'}}>{exoCO.toFixed(1)}</div>
+                  </div>
+                </div>}
+                <div style={{marginTop:8}}><Contacts124 compOn={exoSimRun?exoSim.compOn:(exoCO>=0)} compact={true}/></div>
+              </div>
+            </div>
+
+            {/* Table P/T */}
+            <div style={{background:W,borderRadius:10,padding:'10px 16px',border:`1.5px solid ${G2}`,marginBottom:12}} className="no-print">
+              <button onClick={()=>setShowTable(!showTable)} style={{background:'none',fontWeight:700,fontSize:14,color:BL,padding:0}}>
+                🌡️ {showTable?'▼':'▶'} Table P/T — {GAZ[gaz].nom}</button>
+              {showTable&&<div style={{marginTop:8,display:'inline-block'}}><TablePT gaz={gaz}/></div>}
+            </div>
+
+            {/* Boutons validation + simulation */}
+            <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:14}} className="no-print">
+              <button onClick={validerExo} disabled={exoRes==='ok'} style={{
+                padding:'12px 28px',borderRadius:10,background:exoRes==='ok'?VT:BL,color:'white',fontWeight:800,fontSize:16,opacity:exoRes==='ok'?0.7:1,
+              }}>{exoRes==='ok'?'✅ Bravo !':'✓ Valider'}</button>
+
+              {exoRes==='ok'&&!exoSimRun&&(
+                <button onClick={()=>{setExoSimRun(true);exoSim.reset();}} style={{padding:'12px 22px',borderRadius:10,background:OR,color:'white',fontWeight:800,fontSize:15}}>
+                  🚀 Lancer la simulation</button>
+              )}
+              {exoSimRun&&(
+                <button onClick={exoSim.toggleEV} style={{padding:'12px 18px',borderRadius:10,background:exoSim.evOpen?RG:VT,color:'white',fontWeight:800,fontSize:14}}>
+                  {exoSim.evOpen?'Fermer EV':'Ouvrir EV'}</button>
+              )}
+              {exoSimRun&&(
+                <button onClick={()=>setExoSimRun(false)} style={{padding:'12px 14px',borderRadius:10,background:'#555',color:'white',fontWeight:800,fontSize:14}}>⏹ Stop</button>
+              )}
+
+              {exoRes==='ko'&&<button onClick={()=>setShowSol(true)} style={{padding:'12px 18px',borderRadius:10,border:`2px solid ${G3}`,background:W,color:G7,fontWeight:700,fontSize:14}}>💡 Correction</button>}
+            </div>
+
+            {/* Feedback */}
+            {exoRes==='ok'&&<div style={{padding:16,borderRadius:12,marginBottom:12,background:VTP,border:`2px solid #86efac`}}>
+              <div style={{fontWeight:800,fontSize:16,color:'#166534'}}>✅ Excellent !</div>
+              <div style={{fontSize:14,color:'#15803d',marginTop:4}}>
+                {exo.tempEvap}°C en {GAZ[exo.gaz].nom} → Cut-in = <strong>{solution.pCutIn.toFixed(1)}</strong> → DIFF = <strong>{solution.diff.toFixed(1)}</strong>
+                {!exoSimRun&&' — Clique "🚀 Lancer la simulation" pour vérifier le cycle !'}
+              </div>
+            </div>}
+            {exoRes==='ko'&&!showSol&&<div style={{padding:16,borderRadius:12,marginBottom:12,background:RGP,border:`2px solid #fecaca`}}>
+              <div style={{fontWeight:800,fontSize:16,color:'#991b1b'}}>❌ Pas encore…</div>
+              <div style={{fontSize:14,color:'#b91c1c',marginTop:4}}>Reprends la méthode ou clique <strong>💡 Correction</strong>.</div>
+            </div>}
+            {showSol&&solution&&<div style={{padding:18,borderRadius:12,marginBottom:12,background:'#fffbeb',border:'2px solid #fde68a'}}>
+              <div style={{fontWeight:800,fontSize:16,color:'#92400e',marginBottom:10}}>💡 Correction</div>
+              <div style={{fontSize:15,color:'#78350f',lineHeight:2}}>
+                <strong>1.</strong> Table {GAZ[exo.gaz].nom} → {exo.tempEvap}°C = <strong style={{color:BL}}>{solution.pCutIn.toFixed(1)} bar</strong> (CUT IN)<br/>
+                <strong>2.</strong> Cut-out = <strong style={{color:RG}}>{solution.cutOut.toFixed(1)} bar</strong><br/>
+                <strong>3.</strong> DIFF = {solution.pCutIn.toFixed(1)} − {solution.cutOut.toFixed(1)} = <strong style={{color:OR}}>{solution.diff.toFixed(1)} bar</strong><br/>
+                <strong>4.</strong> Vis CUT IN → {solution.pCutIn.toFixed(1)} / Vis DIFF → {solution.diff.toFixed(1)}
+              </div>
+            </div>}
+          </>
+        )}
+      </div>}
+
+      <footer style={{marginTop:24,paddingTop:12,borderTop:`2px solid ${G2}`,textAlign:'center'}}>
+        <Logo/><p style={{fontSize:11,color:G3,marginTop:4}}>LP Privé Jacques Raynaud — Campus EQUATIO, Marseille</p>
+      </footer>
+    </div>
+  );
+};
+
+ReactDOM.render(React.createElement(App),document.getElementById('root'));
+</script>
+</body>
+</html>
